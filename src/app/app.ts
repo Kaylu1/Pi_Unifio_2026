@@ -17,7 +17,7 @@ export class App implements OnInit {
   readonly nav=[
     {label:'Visão geral',icon:'space_dashboard',path:'/painel',roles:['gerente','atendente','mecanico','consultor','cliente'],group:'A oficina'},
     {label:'Ordens de serviço',icon:'assignment',path:'/ordens',roles:['gerente','atendente','mecanico','consultor','cliente'],group:'A oficina'},
-    {label:'Solicitações',icon:'inbox',path:'/solicitacoes',roles:['gerente','atendente'],group:'A oficina'},
+    {label:'Solicitações',icon:'inbox',path:'/solicitacoes',roles:['gerente','atendente','mecanico','consultor'],group:'A oficina'},
     {label:'Agenda',icon:'calendar_month',path:'/agenda',roles:['gerente','atendente','mecanico'],group:'A oficina'},
     {label:'Clientes',icon:'group',path:'/clientes',roles:['gerente','atendente','consultor'],group:'Cadastros'},
     {label:'Veículos',icon:'directions_car',path:'/veiculos',roles:['gerente','atendente','mecanico','consultor','cliente'],group:'Cadastros'},
@@ -53,6 +53,7 @@ export class App implements OnInit {
   toggleNavigation(){if(this.isMobile)this.mobileOpen=!this.mobileOpen;else this.desktopCollapsed=!this.desktopCollapsed;}
   get publicPage(){return /^\/(entrar|recuperar|redefinir|orcamento|catalogo)(\/|\?|#|$)/.test(this.path);}
   get items(){return this.nav.filter(x=>x.roles.includes(this.api.user()?.role));}
+  get openRequestCount(){return Number(this.api.data().serviceRequests?.openCount)||0;}
   get title(){return this.nav.find(x=>this.path.startsWith(x.path))?.label||'Oficina';}
   get initials(){return (this.api.user()?.name||'O').split(' ').filter(Boolean).slice(0,2).map((x:string)=>x[0]).join('');}
   async logout(){try{await this.api.logout();await this.router.navigateByUrl('/entrar');}catch(e:any){this.api.notify(e.message);}}

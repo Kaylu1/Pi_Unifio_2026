@@ -60,9 +60,14 @@ try {
  await page.getByLabel('Senha', { exact: true }).fill('Oscar@2026!');
  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
  await expect(page).toHaveURL(/\/painel$/);
- await page.goto(base + '/solicitacoes');
+ const incomingCard = page.locator('.incoming-card').filter({ hasText: name });
+ await expect(incomingCard).toContainText(symptoms);
+ await expect(incomingCard).toContainText('Avaliação / diagnóstico');
+ await expect(page.locator('.sidebar nav a[href="/solicitacoes"] .nav-count')).toBeVisible();
+ await incomingCard.getByRole('link', { name: 'Abrir solicitação ' + request.id }).click();
+ await expect(page).toHaveURL(new RegExp('/solicitacoes\\?pedido=' + request.id + '$'));
  await expect(page.getByRole('heading', { name: 'Solicitações de atendimento' })).toBeVisible();
- await page.locator('.request-row').filter({ hasText: name }).click();
+ await expect(page.locator('#request-detail')).toContainText(name);
  await expect(page.locator('#request-detail')).toContainText(symptoms);
  await expect(page.locator('#request-detail')).toContainText('R$ 620,00');
  await expect(page.locator('#request-detail')).toContainText('Tarde');

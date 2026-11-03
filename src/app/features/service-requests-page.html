@@ -83,7 +83,7 @@
       <p>{{request.symptoms}}</p>
     </div>
 
-    <div class="detail-actions" *ngIf="request.status === 'pendente' || request.status === 'em_contato'">
+    <div class="detail-actions" *ngIf="canManage && (request.status === 'pendente' || request.status === 'em_contato')">
       <p *ngIf="request.status === 'pendente'">Entre em contato para combinar data e horário.</p>
       <p *ngIf="request.status === 'em_contato'">Para agendar, confira se o cliente e o veículo já estão cadastrados. Depois escolha um horário livre na agenda.</p>
       <div class="setup-links" *ngIf="request.status === 'em_contato'"><a routerLink="/clientes">Clientes</a><a routerLink="/veiculos">Veículos</a></div>
@@ -95,6 +95,9 @@
         <button mat-flat-button type="button" *ngIf="request.status === 'em_contato'" (click)="changeStatus('atendida')" [disabled]="busy">Concluir solicitação</button>
         <button mat-button type="button" (click)="changeStatus('cancelada')" [disabled]="busy">Cancelar</button>
       </div>
+    </div>
+    <div class="detail-actions is-closed" *ngIf="!canManage && (request.status === 'pendente' || request.status === 'em_contato')">
+      <p>Pedido aguardando confirmação. A equipe de atendimento entrará em contato com o cliente para combinar o horário.</p>
     </div>
     <div class="detail-actions is-closed" *ngIf="request.status === 'atendida' || request.status === 'cancelada'">
       <p>{{request.anonymizedAt ? 'Dados pessoais excluídos. Apenas o histórico técnico foi preservado.' : 'Esta solicitação foi encerrada. Os dados ficam disponíveis no histórico.'}}</p>

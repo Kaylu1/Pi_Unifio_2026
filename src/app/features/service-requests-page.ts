@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -46,16 +47,24 @@ export class ServiceRequestsPage implements OnInit {
   loading = true;
   busy = false;
   error = '';
+  private linkedId: number | null = null;
 
   private readonly currency = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
   });
 
-  constructor(public api: ApiService, private dialog: MatDialog) {}
+  constructor(public api: ApiService, private dialog: MatDialog, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('pedido'));
+    this.linkedId = Number.isSafeInteger(id) && id > 0 ? id : null;
+    this.selectedId = this.linkedId;
     void this.load();
+  }
+
+  get canManage(): boolean {
+    return ['gerente', 'atendente'].includes(this.api.user()?.role);
   }
 
   get filteredRows(): ServiceRequest[] {
@@ -88,6 +97,15 @@ export class ServiceRequestsPage implements OnInit {
       const response = await this.api.get('/service-requests', { page: this.page, pageSize: this.pageSize });
       this.rows = Array.isArray(response.items) ? response.items : [];
       this.total = Number(response.total ?? this.rows.length);
+      if (this.linkedId && !this.rows.some(row => row.id === this.linkedId)) {
+        const linked = await this.api.get('/service-requests/' + this.linkedId);
+        this.rows = [linked, ...this.rows];
+      }
+      if (this.linkedId) {
+        const linked = this.rows.find(row => row.id === this.linkedId);
+        if (linked && !['pendente', 'em_contato'].includes(linked.status)) this.filter = 'todas';
+        this.linkedId = null;
+      }
       if (!this.rows.some(row => row.id === this.selectedId)) this.selectedId = this.rows[0]?.id ?? null;
     } catch (error: any) {
       this.error = error.message || 'Não foi possível carregar as solicitações.';
@@ -108,7 +126,7 @@ export class ServiceRequestsPage implements OnInit {
 
   async changeStatus(status: RequestStatus): Promise<void> {
     const row = this.selected;
-    if (!row || this.busy) return;
+    if (!row || this.busy || !this.canManage) return;
 
     if (status === 'atendida' || status === 'cancelada') {
       const confirmed = await firstValueFrom(this.dialog.open(ConfirmDialog, {
@@ -129,6 +147,7 @@ export class ServiceRequestsPage implements OnInit {
     try {
       await this.api.put('/service-requests/' + row.id, { status });
       await this.load();
+      await this.api.refreshServiceRequests(false);
       this.api.notify(status === 'em_contato' ? 'Solicitação marcada como em contato.' :
         status === 'atendida' ? 'Solicitação concluída.' : 'Solicitação cancelada.');
     } catch (error: any) {
@@ -157,6 +176,7 @@ export class ServiceRequestsPage implements OnInit {
       await this.api.post('/service-requests/' + row.id + '/anonymize');
       this.filter = 'todas';
       await this.load();
+      await this.api.refreshServiceRequests(false);
       this.api.notify('Dados pessoais da solicitação excluídos.');
     } catch (error: any) {
       this.error = error.message || 'Não foi possível excluir os dados pessoais.';

@@ -7,9 +7,10 @@ import { STAFF, APPROVALS, WRITERS, LISTS, ensure, allow, ownOrder, text, number
 import { entityRecord, servicesFrom, mechanicFrom, appointmentData } from './entities.mjs';
 import { attachInspections } from './workflow.mjs';
 import { anonymizeClient, purgeClientBackups } from './privacy.mjs';
+import { serviceRequestSummary } from './service-requests.mjs';
 export async function operationsRoutes({ s, route, method, body: b, user: u, url, origin }) {
     if (route === '/bootstrap' && method === 'GET')
-        return { data: { ...Object.fromEntries(await asyncMap(LISTS, async (t) => [t, await visible(s, t, u)])), settings: await s.settings(), dashboard: await dashboard(s, u) } };
+        return { data: { ...Object.fromEntries(await asyncMap(LISTS, async (t) => [t, await visible(s, t, u)])), serviceRequests: STAFF.includes(u.role) ? await serviceRequestSummary(s) : { openCount: 0, pendingCount: 0, latestPendingId: 0, recentOpen: [] }, settings: await s.settings(), dashboard: await dashboard(s, u) } };
     if (route === '/dashboard' && method === 'GET')
         return { data: await dashboard(s, u) };
     if (route === '/settings' && method === 'GET')

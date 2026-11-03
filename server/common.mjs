@@ -49,7 +49,7 @@ export async function visible(s, table, u) {
             return rows.filter(r => r.clientId === u.clientId);
         if (table === 'budgets') {
             const ids = new Set((await s.list('orders')).filter(o => o.clientId === u.clientId).map(o => o.id));
-            return rows.filter(b => ids.has(b.orderId)).map(({ tokenHash, ...r }) => r);
+            return rows.filter(b => ids.has(b.orderId) && b.status !== 'rascunho').map(({ tokenHash, ...r }) => r);
         }
         return [];
     }

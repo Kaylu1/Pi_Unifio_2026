@@ -24,6 +24,9 @@
 .sidebar nav mat-icon { font-size: 20px; width: 21px; height: 21px; }
 .sidebar nav .nav-arrow { margin-left: auto; width: 15px; height: 15px; font-size: 15px; opacity: 0; transform: translateX(-4px); transition: opacity 180ms, transform 180ms; }
 .sidebar nav .active .nav-arrow { opacity: 1; transform: none; }
+.sidebar nav .nav-count { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; margin-left: auto; border-radius: 8px; background: var(--accent-soft); color: var(--accent-strong); font-size: 11px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.sidebar nav .active .nav-count { background: var(--surface); color: var(--accent-strong); }
+.sidebar nav .nav-count + .nav-arrow { margin-left: 0; }
 .sidebar-catalogue { display: flex; gap: 11px; align-items: center; text-decoration: none; color: #f1f1f7; padding: 15px 12px; border: 1px solid var(--nav-border); border-radius: 13px; margin-top: 24px; font-size: 11px; transition: border-color 180ms, background 180ms; }
 .sidebar-catalogue:hover { border-color: #ffad7c80; background: var(--nav-hover); }
 .sidebar-catalogue>mat-icon { font-size: 21px; width: 21px; height: 21px; color: #ffad7c; }

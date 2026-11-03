@@ -16,7 +16,7 @@ const routes:Routes=[
  {path:'clientes',component:EntityViewPage,canActivate:[authGuard],data:{entityKey:'clients',roles:['gerente','atendente','consultor']}},
  {path:'veiculos',component:EntityViewPage,canActivate:[authGuard],data:{entityKey:'vehicles'}},
  {path:'agenda',component:AgendaPage,canActivate:[authGuard],data:{roles:['gerente','atendente','mecanico']}},
- {path:'solicitacoes',component:ServiceRequestsPage,canActivate:[authGuard],data:{roles:['gerente','atendente']}},
+ {path:'solicitacoes',component:ServiceRequestsPage,canActivate:[authGuard],data:{roles:['gerente','atendente','mecanico','consultor']}},
  {path:'servicos',component:EntityViewPage,canActivate:[authGuard],data:{entityKey:'services',roles:['gerente','atendente','consultor']}},
  {path:'estoque',component:InventoryPage,canActivate:[authGuard],data:{roles:['gerente','atendente','mecanico','consultor']}},
  {path:'fornecedores',component:EntityViewPage,canActivate:[authGuard],data:{entityKey:'suppliers',roles:['gerente']}},

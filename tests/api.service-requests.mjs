@@ -87,6 +87,50 @@ test('Solicitação pública soma preços do catálogo, fica pendente e chega ap
  assert.equal((await request(a, '/appointments', { session: staff })).data.total, 3);
 });
 
+test('painel resume pedidos abertos para a equipe, sem permitir alterações por mecânicos ou leitura por clientes', async t => {
+ const a = await fixture(t);
+ const first = await request(a, '/public/service-requests', { method: 'POST', body: input });
+ const second = await request(a, '/public/service-requests', {
+  method: 'POST', body: { ...input, name: 'Segundo Cliente', phone: '14999992222' },
+ });
+ assert.equal(first.status, 201);
+ assert.equal(second.status, 201);
+ const client = await login(a, 'cliente@oscar.local');
+ assert.equal((await request(a, '/service-requests/summary', { session: client })).status, 403);
+ const clientBootstrap = await request(a, '/bootstrap', { session: client });
+ assert.deepEqual(clientBootstrap.data.serviceRequests, { openCount: 0, pendingCount: 0, latestPendingId: 0, recentOpen: [] });
+ assert.ok(!JSON.stringify(clientBootstrap.data).includes('Segundo Cliente'));
+ const mechanic = await login(a, 'mecanico@oscar.local');
+ const mechanicList = await request(a, '/service-requests?pageSize=30', { session: mechanic });
+ assert.equal(mechanicList.status, 200);
+ assert.deepEqual(mechanicList.data.items.map(row => row.id), [second.data.id, first.data.id]);
+ assert.equal((await request(a, '/service-requests/' + first.data.id, { session: mechanic })).status, 200);
+ assert.equal((await request(a, '/service-requests/' + first.data.id, {
+  method: 'PUT', session: mechanic, body: { status: 'em_contato' },
+ })).status, 403);
+ const consultant = await login(a, 'consultor@oscar.local');
+ assert.equal((await request(a, '/service-requests/summary', { session: consultant })).data.openCount, 2);
+ const manager = await login(a, 'gerente@oscar.local');
+ const initial = await request(a, '/bootstrap', { session: manager });
+ assert.equal(initial.data.serviceRequests.openCount, 2);
+ assert.equal(initial.data.serviceRequests.pendingCount, 2);
+ assert.equal(initial.data.serviceRequests.recentOpen[0].id, second.data.id);
+ assert.equal(initial.data.serviceRequests.recentOpen[0].name, 'Segundo Cliente');
+ assert.equal(initial.data.serviceRequests.recentOpen[0].symptoms, input.symptoms);
+ const contacted = await request(a, '/service-requests/' + first.data.id, {
+  method: 'PUT', session: manager, body: { status: 'em_contato' },
+ });
+ assert.equal(contacted.status, 200);
+ const summary = await request(a, '/service-requests/summary', { session: manager });
+ assert.equal(summary.data.openCount, 2);
+ assert.equal(summary.data.pendingCount, 1);
+ assert.equal(summary.data.recentOpen.find(row => row.id === first.data.id).status, 'em_contato');
+ assert.equal((await request(a, '/service-requests/' + first.data.id, {
+  method: 'PUT', session: manager, body: { status: 'atendida' },
+ })).status, 200);
+ assert.equal((await request(a, '/service-requests/summary', { session: manager })).data.openCount, 1);
+});
+
 test('Solicitação rejeita seleção inválida, serviço inativo, diagnóstico sem relato e data passada', async t => {
  const a = await fixture(t);
  async function submit(body) {

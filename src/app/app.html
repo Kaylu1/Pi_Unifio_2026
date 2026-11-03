@@ -13,7 +13,7 @@
       <nav>
         <ng-container *ngFor="let item of items; let i=index">
           <p class="nav-group" *ngIf="i===0||items[i-1].group!==item.group">{{item.group}}</p>
-          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{exact:item.path==='/painel'}" ariaCurrentWhenActive="page"><mat-icon>{{item.icon}}</mat-icon><span>{{item.label}}</span><mat-icon class="nav-arrow" aria-hidden="true">arrow_forward</mat-icon></a>
+          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{exact:item.path==='/painel'}" ariaCurrentWhenActive="page" [attr.aria-label]="item.path==='/solicitacoes' && openRequestCount ? 'Solicitações: '+openRequestCount+' em andamento' : item.label"><mat-icon>{{item.icon}}</mat-icon><span>{{item.label}}</span><span class="nav-count" *ngIf="item.path==='/solicitacoes' && openRequestCount" aria-hidden="true">{{openRequestCount>99 ? '99+' : openRequestCount}}</span><mat-icon class="nav-arrow" aria-hidden="true">arrow_forward</mat-icon></a>
         </ng-container>
       </nav>
       <a class="sidebar-catalogue" routerLink="/catalogo"><mat-icon>open_in_new</mat-icon><span>Catálogo de serviços<small>Serviços e valores publicados</small></span><mat-icon class="catalogue-arrow">north_east</mat-icon></a>

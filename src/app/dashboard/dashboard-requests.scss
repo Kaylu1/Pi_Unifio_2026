@@ -1,0 +1,40 @@
+.incoming-panel { margin-bottom: 26px; padding: 25px 26px 26px; border-radius: 16px; }
+.incoming-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.incoming-head > a { flex-shrink: 0; border-color: var(--border-strong); border-radius: 10px; }
+.incoming-head > a mat-icon { width: 18px; height: 18px; font-size: 18px; margin-left: 4px; }
+.incoming-eyebrow { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 9px; color: var(--accent-strong); font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.incoming-eyebrow mat-icon { width: 17px; height: 17px; font-size: 17px; }
+.incoming-head h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 6px; color: var(--text); font: 750 20px/1.3 Manrope, sans-serif; letter-spacing: -.025em; }
+.incoming-head h2 span { padding: 5px 9px; border-radius: 7px; background: var(--accent-soft); color: var(--accent-strong); font: 700 11px/1.2 'DM Sans', sans-serif; letter-spacing: 0; }
+.incoming-head p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.incoming-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; }
+.incoming-card { display: flex; flex-direction: column; min-width: 0; padding: 19px 20px 17px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-alt); }
+.incoming-card-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; color: var(--text-muted); font-size: 10px; }
+.incoming-status { padding: 5px 8px; border-radius: 7px; background: var(--warning-soft); color: var(--warning); font-weight: 700; }
+.incoming-status.is-contact { background: var(--info-soft); color: var(--info); }
+.incoming-card h3 { margin: 15px 0 13px; color: var(--text); font: 750 16px/1.35 Manrope, sans-serif; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.incoming-facts { display: grid; gap: 9px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.incoming-facts > a, .incoming-facts > span { display: flex; align-items: flex-start; gap: 8px; min-width: 0; color: var(--text-muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.incoming-facts > a { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.incoming-facts mat-icon { flex-shrink: 0; width: 16px; height: 16px; font-size: 16px; margin-top: 1px; }
+.incoming-detail { padding-top: 14px; }
+.incoming-detail > strong { display: block; margin-bottom: 6px; color: var(--text); font-size: 11px; font-weight: 700; }
+.incoming-detail p, .incoming-detail ul { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.incoming-detail ul { list-style: none; padding: 0; }
+.incoming-detail li + li { margin-top: 4px; }
+.incoming-detail li::before { content: '•'; color: var(--accent-strong); margin-right: 6px; }
+.incoming-detail li span { display: inline-block; margin-left: 4px; padding: 2px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-strong); font-size: 10px; font-weight: 700; }
+.incoming-card-foot { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: auto; padding-top: 18px; }
+.incoming-card-foot > span { display: flex; flex-direction: column; gap: 3px; }
+.incoming-card-foot strong { color: var(--text); font: 750 17px Manrope, sans-serif; font-variant-numeric: tabular-nums; }
+.incoming-card-foot small { color: var(--text-muted); font-size: 10px; }
+.incoming-card-foot a { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; color: var(--accent-strong); font-size: 12px; font-weight: 700; text-decoration: none; }
+.incoming-card-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.incoming-card-foot a mat-icon { width: 17px; height: 17px; font-size: 17px; }
+.incoming-empty { display: flex; align-items: center; gap: 10px; padding: 18px 20px; border: 1px dashed var(--border-strong); border-radius: 11px; color: var(--text-muted); font-size: 12px; }
+.incoming-empty mat-icon { color: var(--success); width: 20px; height: 20px; font-size: 20px; }
+@media (max-width: 760px) {
+  .incoming-panel { padding: 21px; margin-bottom: 20px; }
+  .incoming-head { flex-direction: column; align-items: stretch; }
+  .incoming-head > a { align-self: flex-start; }
+}

@@ -9,7 +9,7 @@ import { CreateOrderDialog } from '../orders/order-dialogs';
   selector: 'app-dashboard',
   standalone: false,
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard-metrics.scss', './dashboard-operations.scss', './dashboard.scss', './dashboard-responsive.scss']
+  styleUrls: ['./dashboard-metrics.scss', './dashboard-operations.scss', './dashboard-requests.scss', './dashboard.scss', './dashboard-responsive.scss']
 })
 export class DashboardPage {
   statusLabel = statusLabel;
@@ -56,6 +56,18 @@ export class DashboardPage {
   get recent() { return [...this.active].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 5); }
   get personal() { return this.api.user()?.role === 'cliente'; }
   get canCreate() { return ['gerente', 'atendente'].includes(this.api.user()?.role); }
+  get openRequestCount() { return Number(this.api.data().serviceRequests?.openCount) || 0; }
+  get recentRequests(): any[] { return this.api.data().serviceRequests?.recentOpen || []; }
+
+  requestPreference(request: any): string {
+    const date = request.preferredDate
+      ? request.preferredDate.split('-').reverse().join('/') : 'Data a combinar';
+    const period = request.preferredPeriod === 'manha' ? 'manhã'
+      : request.preferredPeriod === 'tarde' ? 'tarde' : 'período a combinar';
+    return `${date} · ${period}`;
+  }
+
+  phoneHref(phone: string): string { return 'tel:' + String(phone || '').replace(/\D/g, ''); }
 
   createOrder() {
     this.dialog.open(CreateOrderDialog, { width: '720px', disableClose: true, data: {} })

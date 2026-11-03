@@ -33,6 +33,32 @@
   </article>
 </section>
 
+<section class="incoming-panel surface" *ngIf="!personal" aria-labelledby="incoming-heading" data-motion="panel">
+  <div class="incoming-head">
+    <div>
+      <span class="incoming-eyebrow"><mat-icon aria-hidden="true">notifications_active</mat-icon> Solicitações recebidas</span>
+      <h2 id="incoming-heading">Pedidos do catálogo <span *ngIf="openRequestCount">{{openRequestCount}} em andamento</span></h2>
+      <p>Solicitações recebidas pela oficina, ainda sem agendamento confirmado.</p>
+    </div>
+    <a mat-stroked-button routerLink="/solicitacoes">Ver solicitações <mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+  </div>
+  <div class="incoming-list" *ngIf="recentRequests.length; else noIncomingRequests">
+    <article class="incoming-card" *ngFor="let request of recentRequests" data-motion="row">
+      <div class="incoming-card-head"><span>Pedido #{{request.id}} · {{request.createdAt | date:'dd/MM, HH:mm'}}</span><span class="incoming-status" [class.is-contact]="request.status === 'em_contato'">{{request.status === 'em_contato' ? 'Em contato' : 'Aguardando contato'}}</span></div>
+      <h3>{{request.name}}</h3>
+      <div class="incoming-facts">
+        <a [href]="phoneHref(request.phone)"><mat-icon aria-hidden="true">call</mat-icon>{{request.phone}}</a>
+        <span><mat-icon aria-hidden="true">directions_car</mat-icon>{{request.vehicle}}<ng-container *ngIf="request.plate"> · {{request.plate}}</ng-container></span>
+        <span><mat-icon aria-hidden="true">event</mat-icon>{{requestPreference(request)}}</span>
+      </div>
+      <div class="incoming-detail"><strong>Serviços solicitados</strong><ul><li *ngFor="let service of request.services">{{service.name}} <span *ngIf="service.purpose === 'avaliacao'">Avaliação / diagnóstico</span></li></ul></div>
+      <div class="incoming-detail"><strong>Relato do cliente</strong><p>{{request.symptoms || 'Nenhum relato adicional.'}}</p></div>
+      <div class="incoming-card-foot"><span><strong>{{request.total | currency:'BRL':'symbol':'1.2-2':'pt-BR'}}</strong><small>estimados · {{request.durationMinutes}} min</small></span><a [routerLink]="['/solicitacoes']" [queryParams]="{pedido:request.id}" [attr.aria-label]="'Abrir solicitação '+request.id">Abrir pedido <mat-icon aria-hidden="true">arrow_forward</mat-icon></a></div>
+    </article>
+  </div>
+  <ng-template #noIncomingRequests><div class="incoming-empty"><mat-icon aria-hidden="true">mark_email_read</mat-icon><span>Nenhuma solicitação em andamento no momento.</span></div></ng-template>
+</section>
+
 <div class="dashboard-workspace">
   <section class="operations-panel" data-motion="panel" aria-labelledby="flow-heading">
     <div class="operations-head">

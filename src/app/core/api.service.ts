@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { firstValueFrom } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-const emptyData = () => ({ clients: [], vehicles: [], users: [], services: [], appointments: [], orders: [], budgets: [], parts: [], suppliers: [], movements: [], tickets: [], settings: {}, dashboard: {}, audit: [], emails: [] });
+const emptyData = () => ({ clients: [], vehicles: [], users: [], services: [], appointments: [], orders: [], budgets: [], parts: [], suppliers: [], movements: [], tickets: [], settings: {}, dashboard: {}, serviceRequests: { openCount: 0, pendingCount: 0, latestPendingId: 0, recentOpen: [] }, audit: [], emails: [] });
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -13,17 +13,24 @@ export class ApiService {
   readonly loading = signal(false);
   private csrfToken = '';
   private idleTimer: ReturnType<typeof setTimeout> | undefined;
+  private requestRefreshTimer: ReturnType<typeof setInterval> | undefined;
+  private requestRefreshInFlight = false;
+  private newestKnownRequestId = 0;
 
   constructor(private http: HttpClient, private snack: MatSnackBar) {
     for (const event of ['pointerdown', 'keydown', 'touchstart']) {
       window.addEventListener(event, () => this.activity(), { passive: true });
     }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void this.refreshServiceRequests();
+    });
   }
 
   private activity() {
     if (this.idleTimer) clearTimeout(this.idleTimer);
     if (this.user()) this.idleTimer = setTimeout(() => {
       void this.post('/logout').finally(() => {
+        this.stopRequestUpdates();
         this.user.set(null);
         this.data.set(emptyData());
         this.notify('Sua sessão foi encerrada após 30 minutos sem atividade.');
@@ -54,13 +61,55 @@ export class ApiService {
 
   async logout() {
     await this.post('/logout');
+    this.stopRequestUpdates();
     this.user.set(null); this.data.set(emptyData()); this.csrfToken = '';
   }
 
   async load() {
     this.loading.set(true);
-    try { this.data.set({ ...emptyData(), ...await this.get('/bootstrap') }); }
+    try {
+      this.data.set({ ...emptyData(), ...await this.get('/bootstrap') });
+      this.newestKnownRequestId = Math.max(this.newestKnownRequestId,
+        Number(this.data().serviceRequests.latestPendingId) || 0);
+      this.startRequestUpdates();
+    }
     finally { this.loading.set(false); }
+  }
+
+  async refreshServiceRequests(notifyNew = true): Promise<void> {
+    if (!this.isStaff() || this.requestRefreshInFlight || document.visibilityState !== 'visible') return;
+    this.requestRefreshInFlight = true;
+    const userId = this.user().id;
+    try {
+      const summary = await this.get('/service-requests/summary');
+      if (this.user()?.id !== userId || !Array.isArray(summary?.recentOpen)) return;
+      const latestId = Number(summary.latestPendingId) || 0;
+      const hasNew = latestId > this.newestKnownRequestId;
+      this.newestKnownRequestId = Math.max(this.newestKnownRequestId, latestId);
+      this.data.update(current => ({ ...current, serviceRequests: summary }));
+      if (notifyNew && hasNew) this.notify(`Nova solicitação #${latestId} recebida no catálogo. Confira a fila.`);
+    } catch {
+      // A atualização automática é retomada no próximo intervalo ou ao voltar para a aba.
+    } finally {
+      this.requestRefreshInFlight = false;
+    }
+  }
+
+  private isStaff(): boolean {
+    return ['gerente', 'atendente', 'mecanico', 'consultor'].includes(this.user()?.role);
+  }
+
+  private startRequestUpdates(): void {
+    this.stopRequestUpdates(false);
+    if (this.isStaff()) {
+      this.requestRefreshTimer = setInterval(() => void this.refreshServiceRequests(), 45_000);
+    }
+  }
+
+  private stopRequestUpdates(resetKnown = true): void {
+    if (this.requestRefreshTimer) clearInterval(this.requestRefreshTimer);
+    this.requestRefreshTimer = undefined;
+    if (resetKnown) this.newestKnownRequestId = 0;
   }
 
   get(path: string, params?: Record<string, string | number>): Promise<any> {
@@ -77,7 +126,7 @@ export class ApiService {
       return await firstValueFrom(this.http.request(method, '/api' + path, { body, headers, params, withCredentials: true }));
     } catch (error) {
       const response = error as HttpErrorResponse;
-      if (response.status === 401 && this.user()) { this.user.set(null); this.data.set(emptyData()); }
+      if (response.status === 401 && this.user()) { this.stopRequestUpdates(); this.user.set(null); this.data.set(emptyData()); }
       throw new Error(response.error?.message || (response.status === 0 ? 'Não foi possível acessar o servidor local. Verifique se a API está em execução e tente novamente.' : 'Não foi possível concluir. Confira os dados e tente novamente.'));
     }
   }

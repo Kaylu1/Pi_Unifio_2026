@@ -6,6 +6,7 @@ import { timestamp } from './auth-crypto.mjs';
 import { STAFF, ensure, allow, ownOrder, text, number, round, visible, enqueue, roundQuantity } from './common.mjs';
 import { servicesFrom, mechanicFrom } from './entities.mjs';
 import { itemData, attachInspections, changeStatus, decideBudget, publishBudget, buildBudgetItems } from './workflow.mjs';
+import { renderBudgetPdf } from './budget-pdf.mjs';
 export async function orderRoutes({ s, route, method, body: b, user: u }) {
     if (route === '/orders' && method === 'POST') {
         allow(u, ['gerente', 'atendente']);
@@ -132,11 +133,25 @@ export async function orderRoutes({ s, route, method, body: b, user: u }) {
         await s.audit(u, 'alterar', 'orders', o.id, { action, itemId: b.itemId ?? null });
         return { data: saved };
     }
-    const bm = /^\/budgets\/(\d+)(?:\/(publish|decisions))?$/.exec(route);
+    const bm = /^\/budgets\/(\d+)(?:\/(publish|decisions|pdf))?$/.exec(route);
     if (bm) {
         const budget = await ensure(s, 'budgets', bm[1]);
-        ownOrder(u, await ensure(s, 'orders', budget.orderId));
+        const order = ownOrder(u, await ensure(s, 'orders', budget.orderId));
+        if (u.role === 'cliente')
+            assert(budget.status !== 'rascunho', 'Orçamento não encontrado.', 404);
         const action = bm[2];
+        if (action === 'pdf' && method === 'GET') {
+            allow(u, ['gerente', 'consultor', 'atendente', 'cliente']);
+            const [client, vehicle, settings] = await Promise.all([
+                ensure(s, 'clients', order.clientId),
+                ensure(s, 'vehicles', order.vehicleId),
+                s.settings(),
+            ]);
+            return {
+                pdf: await renderBudgetPdf({ budget, order, client, vehicle, settings }),
+                filename: `orcamento-${Number(budget.number ?? budget.id)}.pdf`,
+            };
+        }
         if (!action && method === 'GET') {
             allow(u, ['gerente', 'consultor', 'atendente', 'cliente']);
             const { tokenHash, ...safe } = budget;

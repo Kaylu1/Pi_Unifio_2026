@@ -45,6 +45,8 @@
 .budget-card { padding: 26px 0; border-top: 1px solid var(--border); }
 .budget-card:first-child { padding-top: 7px; border-top: 0; }
 .budget-card:last-child { padding-bottom: 0; }
+.budget-download { margin: 16px 0 10px; }
+.budget-download button { min-height: 44px; }
 .budget-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
 .budget-head strong { font-family: Manrope, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
 .budget-line { display: flex; justify-content: space-between; gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.7; }

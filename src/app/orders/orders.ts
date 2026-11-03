@@ -20,7 +20,7 @@ export class OrdersPage {
 
 @Component({selector:'app-order-detail',standalone:false,templateUrl:'./order-detail.html',styleUrls:['./order-detail.scss','./order-assessment.scss']})
 export class OrderDetailPage implements OnInit, OnDestroy {
- order:any=null;error='';busy=false;selectedTab=0;statusLabel=statusLabel;private subscription?:Subscription;
+ order:any=null;error='';busy=false;pdfBusyId:number|null=null;selectedTab=0;statusLabel=statusLabel;private subscription?:Subscription;
  readonly states=['aberta','inspecao','aguardando_aprovacao','execucao','concluida','encerrada'];
  constructor(public api:ApiService,private route:ActivatedRoute,private dialog:MatDialog){}
  ngOnInit(){this.subscription=this.route.paramMap.subscribe(()=>{void this.reload();});}
@@ -36,6 +36,7 @@ export class OrderDetailPage implements OnInit, OnDestroy {
  get canWork(){return ['gerente','mecanico'].includes(this.api.user()?.role);}
  get canManage(){return ['gerente','atendente'].includes(this.api.user()?.role);}
  get canBudget(){return ['gerente','consultor'].includes(this.api.user()?.role);}
+ get canDownloadBudget(){return ['gerente','consultor','atendente','cliente'].includes(this.api.user()?.role);}
  get locked(){return ['encerrada','cancelada'].includes(this.order?.status);}
  get total(){return this.items.filter(x=>x.decision==='aprovado').reduce((sum,x)=>sum+Number(x.quantity)*Number(x.price),0);}
  get nextStatuses(){const map:Record<string,string[]>={aberta:['inspecao','cancelada'],inspecao:['aguardando_aprovacao','cancelada'],aguardando_aprovacao:['execucao'],execucao:['concluida'],concluida:['encerrada']};return map[this.order?.status]||[];}
@@ -51,4 +52,22 @@ export class OrderDetailPage implements OnInit, OnDestroy {
  respond(budget:any){this.dialog.open(BudgetDecisionDialog,{width:'640px',disableClose:true,data:budget}).afterClosed().subscribe(saved=>{if(saved)void this.refresh();});}
  url(budget:any){return budget.link?new URL(budget.link,window.location.origin).href:'';}
  async copy(budget:any){try{await navigator.clipboard.writeText(this.url(budget));this.api.notify('Link copiado. Encaminhe ao cliente pelo canal combinado.');}catch{this.api.notify('Selecione o link exibido e copie para encaminhar ao cliente.');}}
+ async downloadBudgetPdf(budget:any){
+  if(this.pdfBusyId!==null)return;
+  this.pdfBusyId=budget.id;this.error='';
+  try{
+   const response=await fetch(`/api/budgets/${budget.id}/pdf`,{credentials:'same-origin'});
+   if(!response.ok){
+    const error=await response.json().catch(()=>null);
+    throw new Error(error?.message||'Não foi possível gerar o PDF do orçamento.');
+   }
+   const blob=await response.blob();
+   const url=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=url;link.download=`orcamento-${budget.number||budget.id}.pdf`;
+   document.body.appendChild(link);link.click();link.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),10000);
+  }catch(error:any){this.error=error.message||'Não foi possível gerar o PDF do orçamento.';this.api.notify(this.error);}
+  finally{this.pdfBusyId=null;}
+ }
 }

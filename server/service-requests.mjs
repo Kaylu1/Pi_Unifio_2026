@@ -1,5 +1,5 @@
 import { assert } from './domain.mjs';
-import { allow, dateValue, listResult, round, text } from './common.mjs';
+import { STAFF, allow, dateValue, listResult, round, text } from './common.mjs';
 import { servicesFrom } from './entities.mjs';
 import { anonymizeServiceRequest, purgeServiceRequestBackups } from './privacy.mjs';
 
@@ -48,10 +48,28 @@ export async function createPublicServiceRequest(s, body) {
  });
 }
 
+export async function serviceRequestSummary(s) {
+ const open = (await s.list('service_requests'))
+  .filter(request => ['pendente', 'em_contato'].includes(request.status))
+  .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id - left.id);
+ return {
+  openCount: open.length,
+  pendingCount: open.filter(request => request.status === 'pendente').length,
+  latestPendingId: open.reduce((latest, request) => request.status === 'pendente' ? Math.max(latest, request.id) : latest, 0),
+  recentOpen: open.slice(0, 3),
+ };
+}
+
 export async function serviceRequestRoutes({ s, route, method, body, user, url }) {
+ if (route === '/service-requests/summary' && method === 'GET') {
+  allow(user, STAFF);
+  return { data: await serviceRequestSummary(s) };
+ }
  if (route === '/service-requests' && method === 'GET') {
-  allow(user, ['gerente', 'atendente']);
-  return { data: await listResult(await s.list('service_requests'), url, s) };
+  allow(user, STAFF);
+  const requests = (await s.list('service_requests'))
+   .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id - left.id);
+  return { data: await listResult(requests, url, s) };
  }
  const anonymize = /^\/service-requests\/(\d+)\/anonymize$/.exec(route);
  if (anonymize && method === 'POST') {
@@ -64,7 +82,8 @@ export async function serviceRequestRoutes({ s, route, method, body, user, url }
  }
  const match = /^\/service-requests\/(\d+)$/.exec(route);
  if (!match) return null;
- allow(user, ['gerente', 'atendente']);
+ if (method === 'PUT') allow(user, ['gerente', 'atendente']);
+ else allow(user, STAFF);
  const request = await s.get('service_requests', Number(match[1]));
  assert(request, 'Solicitação não encontrada.', 404);
  if (method === 'GET') return { data: request };
