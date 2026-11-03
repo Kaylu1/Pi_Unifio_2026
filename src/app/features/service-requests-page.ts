@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { ConfirmDialog } from '../core/confirm-dialog';
+import { RequestConfirmDialog } from './request-confirm-dialog';
 
 type RequestStatus = 'pendente' | 'em_contato' | 'atendida' | 'cancelada';
 type RequestService = {
@@ -28,6 +29,9 @@ type ServiceRequest = {
   status: RequestStatus;
   createdAt: string;
   anonymizedAt?: string;
+  appointmentId?: number | null;
+  clientId?: number | null;
+  vehicleId?: number | null;
 };
 
 @Component({
@@ -124,19 +128,52 @@ export class ServiceRequestsPage implements OnInit {
     }
   }
 
+  appointmentFor(request: ServiceRequest): any {
+    return (this.api.data().appointments || []).find((appointment: any) => appointment.id === request.appointmentId);
+  }
+
+  registrationIncomplete(request: ServiceRequest): boolean {
+    const client = (this.api.data().clients || []).find((record: any) => record.id === request.clientId);
+    const vehicle = (this.api.data().vehicles || []).find((record: any) => record.id === request.vehicleId);
+    return client?.registrationStatus === 'provisorio' || vehicle?.registrationStatus === 'provisorio';
+  }
+
+  confirmAppointment(): void {
+    const request = this.selected;
+    if (!request || !this.canManage || this.busy || request.anonymizedAt || !['pendente', 'em_contato'].includes(request.status)) return;
+    this.dialog.open(RequestConfirmDialog, {
+      width: '860px', maxWidth: 'calc(100vw - 20px)', disableClose: true,
+      data: { request }
+    }).afterClosed().subscribe(result => {
+      if (result?.appointment?.id) void this.afterConfirmation(request.id);
+    });
+  }
+
+  private async afterConfirmation(requestId: number): Promise<void> {
+    this.selectedId = requestId;
+    this.linkedId = requestId;
+    this.filter = 'todas';
+    try {
+      await this.api.load();
+      await this.load();
+      await this.api.refreshServiceRequests(false);
+      this.api.notify('Agendamento confirmado. Confira os dados na agenda.');
+    } catch (error: any) {
+      this.error = 'O agendamento foi confirmado, mas a tela não atualizou. Atualize a página para conferir: ' + (error.message || 'falha de conexão');
+    }
+  }
+
   async changeStatus(status: RequestStatus): Promise<void> {
     const row = this.selected;
     if (!row || this.busy || !this.canManage) return;
 
-    if (status === 'atendida' || status === 'cancelada') {
+    if (status === 'cancelada') {
       const confirmed = await firstValueFrom(this.dialog.open(ConfirmDialog, {
         width: '460px',
         data: {
-          title: status === 'atendida' ? 'Concluir solicitação?' : 'Cancelar solicitação?',
-          message: status === 'atendida'
-            ? 'Conclua somente depois de combinar o atendimento com o cliente. Esta ação não cria um agendamento.'
-            : 'A solicitação será encerrada. O histórico continuará disponível para consulta.',
-          action: status === 'atendida' ? 'Concluir' : 'Cancelar solicitação'
+          title: 'Cancelar solicitação?',
+          message: 'A solicitação será encerrada. O histórico continuará disponível para consulta.',
+          action: 'Cancelar solicitação'
         }
       }).afterClosed());
       if (!confirmed) return;
@@ -148,8 +185,7 @@ export class ServiceRequestsPage implements OnInit {
       await this.api.put('/service-requests/' + row.id, { status });
       await this.load();
       await this.api.refreshServiceRequests(false);
-      this.api.notify(status === 'em_contato' ? 'Solicitação marcada como em contato.' :
-        status === 'atendida' ? 'Solicitação concluída.' : 'Solicitação cancelada.');
+      this.api.notify(status === 'em_contato' ? 'Solicitação marcada como em contato.' : 'Solicitação cancelada.');
     } catch (error: any) {
       this.error = error.message || 'Não foi possível atualizar a solicitação.';
     } finally {
@@ -185,11 +221,11 @@ export class ServiceRequestsPage implements OnInit {
     }
   }
 
-  statusText(status: RequestStatus): string {
+  statusText(status: RequestStatus, appointmentId?: number | null): string {
     return ({
       pendente: 'Aguardando contato',
       em_contato: 'Em contato',
-      atendida: 'Concluída',
+      atendida: appointmentId ? 'Agendada' : 'Atendida',
       cancelada: 'Cancelada'
     })[status] ?? status;
   }

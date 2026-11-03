@@ -33,7 +33,7 @@
         [class.selected]="selected?.id === row.id" [attr.aria-pressed]="selected?.id === row.id" (click)="select(row)">
         <span class="row-main"><strong>{{row.name}}</strong><small>#{{row.id}} · {{date(row.createdAt)}}</small></span>
         <span class="row-vehicle">{{row.vehicle}}<span *ngIf="row.plate"> · {{row.plate}}</span></span>
-        <span class="row-bottom"><span class="status-pill" [ngClass]="row.status">{{statusText(row.status)}}</span><strong>{{money(row.total)}}</strong></span>
+        <span class="row-bottom"><span class="status-pill" [ngClass]="row.status">{{statusText(row.status, row.appointmentId)}}</span><strong>{{money(row.total)}}</strong></span>
       </button>
     </ng-container>
     <ng-template #noRequests>
@@ -57,7 +57,7 @@
         <h2>{{request.name}}</h2>
         <p>Enviada em {{date(request.createdAt)}}</p>
       </div>
-      <span class="status-pill" [ngClass]="request.status">{{statusText(request.status)}}</span>
+      <span class="status-pill" [ngClass]="request.status">{{statusText(request.status, request.appointmentId)}}</span>
     </div>
 
     <div class="detail-contact" *ngIf="!request.anonymizedAt; else redactedContact">
@@ -84,22 +84,25 @@
     </div>
 
     <div class="detail-actions" *ngIf="canManage && (request.status === 'pendente' || request.status === 'em_contato')">
-      <p *ngIf="request.status === 'pendente'">Entre em contato para combinar data e horário.</p>
-      <p *ngIf="request.status === 'em_contato'">Para agendar, confira se o cliente e o veículo já estão cadastrados. Depois escolha um horário livre na agenda.</p>
-      <div class="setup-links" *ngIf="request.status === 'em_contato'"><a routerLink="/clientes">Clientes</a><a routerLink="/veiculos">Veículos</a></div>
+      <p>Combine a data e o horário com o cliente. Confirme o pedido aqui para aproveitar os dados enviados e registrá-lo na agenda.</p>
       <div class="action-buttons">
+        <button mat-flat-button type="button" (click)="confirmAppointment()" [disabled]="busy"><mat-icon>event_available</mat-icon>Agendar este pedido</button>
         <button mat-flat-button type="button" *ngIf="request.status === 'pendente'" (click)="changeStatus('em_contato')" [disabled]="busy">
           <mat-icon>phone_in_talk</mat-icon>Marcar em contato
         </button>
-        <a mat-stroked-button routerLink="/agenda" *ngIf="request.status === 'em_contato'"><mat-icon>calendar_month</mat-icon>Abrir agenda</a>
-        <button mat-flat-button type="button" *ngIf="request.status === 'em_contato'" (click)="changeStatus('atendida')" [disabled]="busy">Concluir solicitação</button>
         <button mat-button type="button" (click)="changeStatus('cancelada')" [disabled]="busy">Cancelar</button>
       </div>
     </div>
     <div class="detail-actions is-closed" *ngIf="!canManage && (request.status === 'pendente' || request.status === 'em_contato')">
       <p>Pedido aguardando confirmação. A equipe de atendimento entrará em contato com o cliente para combinar o horário.</p>
     </div>
-    <div class="detail-actions is-closed" *ngIf="request.status === 'atendida' || request.status === 'cancelada'">
+    <div class="detail-actions confirmed-request" *ngIf="request.status === 'atendida' && request.appointmentId">
+      <strong><mat-icon aria-hidden="true">event_available</mat-icon>Horário confirmado na agenda</strong>
+      <p *ngIf="appointmentFor(request) as appointment">{{day(appointment.date)}} às {{appointment.time}} · {{api.person(appointment.mechanicId)?.name || 'Mecânico a definir'}}</p>
+      <p *ngIf="registrationIncomplete(request)">Cadastro provisório: complete CPF, e-mail e dados do veículo depois. O contato com o cliente será por telefone.</p>
+      <div class="action-buttons"><a mat-stroked-button *ngIf="appointmentFor(request) as appointment" routerLink="/agenda" [queryParams]="{date:appointment.date,appointmentId:appointment.id}"><mat-icon aria-hidden="true">calendar_month</mat-icon>Ver na agenda</a><a mat-button *ngIf="registrationIncomplete(request)" routerLink="/clientes" [queryParams]="{q:request.name}">Completar cliente</a><a mat-button *ngIf="registrationIncomplete(request)" routerLink="/veiculos" [queryParams]="{q:request.plate || request.vehicle}">Completar veículo</a></div>
+    </div>
+    <div class="detail-actions is-closed" *ngIf="request.status === 'cancelada' || (request.status === 'atendida' && !request.appointmentId)">
       <p>{{request.anonymizedAt ? 'Dados pessoais excluídos. Apenas o histórico técnico foi preservado.' : 'Esta solicitação foi encerrada. Os dados ficam disponíveis no histórico.'}}</p>
     </div>
     <div class="request-privacy" *ngIf="api.user()?.role === 'gerente' && !request.anonymizedAt">

@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>Agendar pedido #{{request.id}}</h2>
+<mat-dialog-content class="confirm-content">
+  <p class="confirm-intro">Confira os dados enviados pelo cliente e combine o horário antes de confirmar. O cadastro poderá ser completado depois.</p>
+
+  <div class="request-snapshot" aria-label="Dados enviados no catálogo">
+    <div><span>Cliente e contato</span><strong>{{request.name}}</strong><small>{{request.phone}}</small></div>
+    <div><span>Veículo informado</span><strong>{{request.vehicle}}</strong><small>{{request.plate || 'Placa não informada'}}</small></div>
+    <div class="snapshot-symptoms"><span>Relato do cliente</span><p>{{request.symptoms || 'Nenhum relato adicional.'}}</p></div>
+  </div>
+
+  <form id="request-confirm-form" [formGroup]="form" (ngSubmit)="save()">
+    <section class="confirm-section" aria-labelledby="confirm-customer-title">
+      <div class="confirm-section-heading"><span>1</span><div><h3 id="confirm-customer-title">Vincular cliente e veículo</h3><p>Se já houver cadastro, selecione-o. Caso contrário, os dados enviados criarão cadastros provisórios.</p></div></div>
+      <div class="confirm-fields">
+        <mat-form-field appearance="outline"><mat-label>Cliente já cadastrado (opcional)</mat-label><mat-select formControlName="clientId"><mat-option [value]="null">Usar dados do pedido</mat-option><mat-option *ngFor="let client of clients" [value]="client.id">{{client.name}} · {{client.phone || 'sem telefone'}}</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="!newClient"><mat-label>Veículo já cadastrado (opcional)</mat-label><mat-select formControlName="vehicleId"><mat-option [value]="null">Usar veículo do pedido</mat-option><mat-option *ngFor="let vehicle of vehicles" [value]="vehicle.id">{{vehicle.plate || 'Sem placa'}} · {{vehicle.model}}</mat-option></mat-select></mat-form-field>
+      </div>
+      <p class="confirm-hint" *ngIf="newClient || newVehicle"><mat-icon aria-hidden="true">info</mat-icon>Dados que faltam, como CPF, e-mail e chassi, serão completados no cadastro depois da reserva. O contato com o cliente será pelo telefone.</p>
+      <p class="confirm-hint" *ngIf="hasMatchingClient && newClient"><mat-icon aria-hidden="true">person_search</mat-icon>Há um cliente com o mesmo telefone no cadastro. Confira se deve vinculá-lo antes de seguir.</p>
+      <p class="confirm-hint" *ngIf="hasMatchingVehicle && newVehicle"><mat-icon aria-hidden="true">directions_car</mat-icon>A placa informada já aparece no cadastro. Se for o mesmo veículo, selecione-o para evitar duplicidade.</p>
+      <p class="confirm-hint" *ngIf="plateOwnerConflict"><mat-icon aria-hidden="true">warning_amber</mat-icon>A placa do pedido está ligada ao cliente anterior. Ao confirmar com outro cliente, o novo veículo ficará sem placa até a equipe conferir o documento.</p>
+      <div class="selected-records" *ngIf="selectedClient || selectedVehicle"><div *ngIf="selectedClient"><span>Cliente escolhido</span><strong>{{selectedClient.name}} · {{selectedClient.phone}}</strong></div><div *ngIf="selectedVehicle"><span>Veículo escolhido</span><strong>{{selectedVehicle.plate}} · {{selectedVehicle.model}}</strong></div></div>
+      <div class="confirm-alert" *ngIf="identityMismatch"><mat-icon aria-hidden="true">warning_amber</mat-icon><div><strong>Os dados escolhidos são diferentes dos enviados.</strong><p>Confira nome, telefone e placa antes de vincular este pedido a outro cadastro.</p><mat-checkbox formControlName="acceptIdentityMismatch">Conferi com o cliente e o vínculo está correto</mat-checkbox></div></div>
+    </section>
+
+    <section class="confirm-section" aria-labelledby="confirm-service-title">
+      <div class="confirm-section-heading"><span>2</span><div><h3 id="confirm-service-title">Serviços do pedido</h3><p>Os serviços escolhidos pelo cliente serão mantidos no agendamento.</p></div></div>
+      <ul class="confirm-services"><li *ngFor="let service of request.services"><span><strong>{{service.name}}</strong><small>{{service.purpose === 'avaliacao' ? 'Avaliação / diagnóstico' : 'Serviço'}} · {{service.durationMinutes}} min</small></span><strong>{{service.price | currency:'BRL':'symbol':'1.2-2':'pt-BR'}}</strong></li></ul>
+      <p class="confirm-total">Estimativa enviada: <strong>{{request.total | currency:'BRL':'symbol':'1.2-2':'pt-BR'}}</strong></p>
+      <div class="confirm-alert" *ngIf="inactiveServices.length"><mat-icon aria-hidden="true">block</mat-icon><div><strong>Serviço indisponível no catálogo</strong><p>Peça ao gerente para reativar ou corrigir {{inactiveServices.length === 1 ? 'o serviço' : 'os serviços'}} antes de confirmar este pedido.</p></div></div>
+      <div class="confirm-alert" *ngIf="changedServices.length"><mat-icon aria-hidden="true">price_change</mat-icon><div><strong>O catálogo mudou desde o pedido</strong><p *ngFor="let change of changedServices">{{change.requested.name}}: enviado {{change.requested.price | currency:'BRL':'symbol':'1.2-2':'pt-BR'}} / {{change.requested.durationMinutes}} min / {{change.requested.purpose === 'avaliacao' ? 'Avaliação / diagnóstico' : 'Serviço'}}; atual {{change.current.name}} · {{change.current.price | currency:'BRL':'symbol':'1.2-2':'pt-BR'}} / {{change.current.durationMinutes}} min / {{change.current.purpose === 'avaliacao' ? 'Avaliação / diagnóstico' : 'Serviço'}}.</p><mat-checkbox formControlName="acceptCatalogChanges">Confirmei com o cliente os dados atualizados</mat-checkbox></div></div>
+    </section>
+
+    <section class="confirm-section" aria-labelledby="confirm-schedule-title">
+      <div class="confirm-section-heading"><span>3</span><div><h3 id="confirm-schedule-title">Horário combinado</h3><p>Preferência enviada: {{request.preferredDate || 'data a combinar'}} · {{requestedPeriod}}. Confirme a escolha com o cliente.</p></div></div>
+      <div class="confirm-fields">
+        <mat-form-field appearance="outline"><mat-label>Data</mat-label><input matInput type="date" formControlName="date" [min]="today"><mat-error>Escolha uma data válida.</mat-error></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Horário e mecânico disponíveis</mat-label><mat-select formControlName="slot"><mat-option *ngFor="let slot of slots" [value]="slot.mechanicId+'|'+slot.time">{{slot.time}} · {{slot.mechanicName}}</mat-option></mat-select><mat-hint>{{loadingSlots ? 'Consultando horários…' : slots.length ? 'Somente horários livres são exibidos.' : 'Selecione a data para consultar.'}}</mat-hint><mat-error>Escolha um horário livre.</mat-error></mat-form-field>
+      </div>
+      <p class="confirm-hint" *ngIf="!loadingSlots && !slots.length && form.controls.date.value && !inactiveServices.length">Nenhum horário livre nessa data. Tente outro dia.</p>
+      <mat-checkbox formControlName="contactConfirmed">Conversei com o cliente e confirmei este horário</mat-checkbox>
+      <p class="confirm-validation" *ngIf="form.controls.contactConfirmed.invalid && form.controls.contactConfirmed.touched">Confirme o horário com o cliente antes de agendar.</p>
+    </section>
+    <p class="form-error" role="alert" *ngIf="error">{{error}}</p>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button type="button" (click)="ref.close()" [disabled]="busy">Voltar</button><button mat-flat-button type="submit" form="request-confirm-form" [disabled]="busy || loadingSlots || !!inactiveServices.length">{{busy ? 'Confirmando…' : 'Confirmar agendamento'}}</button></mat-dialog-actions>

@@ -92,3 +92,4 @@
   .secondary-appointment>mat-icon { order: 3; }
 }
 @media (prefers-reduced-motion: reduce) { .secondary-appointment { transition: none; } }
+.agenda-source-note{margin:0 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-alt);color:var(--text-muted);font-size:12px;line-height:1.5}.agenda-source-note a{color:var(--accent-strong);font-weight:700;text-decoration:underline;text-underline-offset:2px}

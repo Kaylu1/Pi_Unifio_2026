@@ -36,6 +36,7 @@ import { ConfirmDialog } from './core/confirm-dialog';
 import { PublicCataloguePage, PublicBudgetPage, NotFoundPage } from './public/public-pages';
 import { FEATURE_COMPONENTS } from './features/feature-pages';
 import { ServiceRequestsPage } from './features/service-requests-page';
+import { RequestConfirmDialog } from './features/request-confirm-dialog';
 registerLocaleData(localePt);
 function paginatorIntl() {
  const intl=new MatPaginatorIntl();
@@ -44,7 +45,7 @@ function paginatorIntl() {
  return intl;
 }
 @NgModule({
- declarations:[App,LoginPage,RecoverPage,ResetPage,DashboardPage,AgendaPage,OrdersPage,OrderDetailPage,CreateOrderDialog,OrderItemDialog,BudgetEditorDialog,ReasonDialog,BudgetDecisionDialog,ConfirmDialog,PublicCataloguePage,PublicBudgetPage,NotFoundPage,ServiceRequestsPage,...FEATURE_COMPONENTS],
+ declarations:[App,LoginPage,RecoverPage,ResetPage,DashboardPage,AgendaPage,OrdersPage,OrderDetailPage,CreateOrderDialog,OrderItemDialog,BudgetEditorDialog,ReasonDialog,BudgetDecisionDialog,ConfirmDialog,PublicCataloguePage,PublicBudgetPage,NotFoundPage,ServiceRequestsPage,RequestConfirmDialog,...FEATURE_COMPONENTS],
  imports:[BrowserModule,FormsModule,ReactiveFormsModule,AppRoutingModule,MatButtonModule,MatCardModule,MatDialogModule,MatFormFieldModule,MatInputModule,MatSelectModule,MatTableModule,MatPaginatorModule,MatChipsModule,MatIconModule,MatTabsModule,MatCheckboxModule,MatDatepickerModule,MatNativeDateModule,MatTooltipModule,MatProgressSpinnerModule,MatProgressBarModule,MatSnackBarModule,MatMenuModule,MatExpansionModule,MatSlideToggleModule],
  providers:[provideHttpClient(),provideBrowserGlobalErrorListeners(),{provide:LOCALE_ID,useValue:'pt-BR'},{provide:MAT_DATE_LOCALE,useValue:'pt-BR'},{provide:MatPaginatorIntl,useFactory:paginatorIntl}],
  bootstrap:[App]

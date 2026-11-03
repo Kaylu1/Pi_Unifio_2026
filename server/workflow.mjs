@@ -4,19 +4,21 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { assert, DomainError, assertTransition, maskBudget } from './domain.mjs';
 import { timestamp, hashToken } from './auth-crypto.mjs';
 import { ensure, number, round, text, APPROVALS, enqueue, quantityValue } from './common.mjs';
-export async function itemData(s, b, u, { source = 'inicial', allowPending = false } = {}) {
-    const service = b.serviceId ? await ensure(s, 'services', b.serviceId) : null, part = b.partId ? await ensure(s, 'parts', b.partId) : null;
+export async function itemData(s, b, u, { source = 'inicial', allowPending = false, confirmedService = null } = {}) {
+    assert(!confirmedService || confirmedService.id === b.serviceId,
+        'Serviço confirmado diferente do agendamento.', 409);
+    const service = b.serviceId ? (confirmedService ?? await ensure(s, 'services', b.serviceId)) : null, part = b.partId ? await ensure(s, 'parts', b.partId) : null;
     assert(Boolean(service) !== Boolean(part), 'Selecione um serviço ou uma peça para cada item.');
-    assert((service ?? part).active, 'Selecione um serviço ou uma peça ativa.');
+    assert(confirmedService || (service ?? part).active, 'Selecione um serviço ou uma peça ativa.');
     const quantity = quantityValue(b.quantity ?? 1), price = round(number(b.price ?? (service ?? part).price, 'o valor unitário', 0, 1000000)), decision = allowPending ? 'pendente' : b.decision ?? 'aprovado';
     assert((allowPending ? ['pendente'] : ['aprovado', 'recusado']).includes(decision), 'Registre aprovação ou recusa para os itens do primeiro atendimento.');
     if (!allowPending && decision === 'aprovado')
         assert(((await s.settings()).approvalMethods ?? APPROVALS).includes(b.approvalMethod) && b.approvalMethod !== 'link', 'Registre uma forma de aprovação admitida pela oficina.');
-    return { id: randomUUID(), serviceId: service?.id ?? null, partId: part?.id ?? null, kind: part ? 'peca' : 'servico', servicePurpose: service ? servicePurpose(service) : null, description: text(b.description ?? service?.name ?? part?.description, 'a descrição do item', 200), quantity, price, total: round(quantity * price), decision, approvedAt: decision === 'aprovado' ? timestamp() : null, approvalMethod: decision === 'aprovado' ? b.approvalMethod : null, approvalNotes: text(b.approvalNotes ?? '', 'a observação', 500, true), approvalBy: decision === 'aprovado' ? u.id : null, executedAt: null, executedBy: null, source, suppliedByClient: b.suppliedByClient === true, justification: text(b.justification ?? '', 'a justificativa', 1000, true) };
+    return { id: randomUUID(), serviceId: service?.id ?? null, partId: part?.id ?? null, kind: part ? 'peca' : 'servico', servicePurpose: service ? (confirmedService?.purpose ?? servicePurpose(service)) : null, description: text(b.description ?? service?.name ?? part?.description, 'a descrição do item', 200), quantity, price, total: round(quantity * price), decision, approvedAt: decision === 'aprovado' ? timestamp() : null, approvalMethod: decision === 'aprovado' ? b.approvalMethod : null, approvalNotes: text(b.approvalNotes ?? '', 'a observação', 500, true), approvalBy: decision === 'aprovado' ? u.id : null, executedAt: null, executedBy: null, source, suppliedByClient: b.suppliedByClient === true, justification: text(b.justification ?? '', 'a justificativa', 1000, true) };
 }
-export async function attachInspections(s, o, item) {
+export async function attachInspections(s, o, item, confirmedService = null) {
     if (item.serviceId)
-        for (const [i, description] of (await ensure(s, 'services', item.serviceId)).inspectionItems.entries())
+        for (const [i, description] of (confirmedService?.inspectionItems ?? (await ensure(s, 'services', item.serviceId)).inspectionItems).entries())
             o.inspections.push({ id: `${item.id}-${i}`, itemId: item.id, description, result: '', notes: '' });
 }
 export async function changeStatus(s, o, status, u) {
@@ -64,7 +66,9 @@ export async function decideBudget(s, b, body, u, origin) {
     if (o.status === 'aguardando_aprovacao' && o.items.every(i => i.decision !== 'pendente'))
         await changeStatus(s, o, 'execucao', u ?? { id: null, name: 'Cliente pelo link' });
     await s.audit(u ?? { name: 'Cliente pelo link' }, 'alterar', 'budgets', b.id, { origin, itemDecisions: [...decisions] });
-    await enqueue(s, (await ensure(s, 'clients', o.clientId)).email, `Resposta do orçamento ${b.number}`, 'Sua resposta foi registrada. A oficina seguirá apenas com os itens aprovados.');
+    const client = await ensure(s, 'clients', o.clientId);
+    if (client.email)
+        await enqueue(s, client.email, `Resposta do orçamento ${b.number}`, 'Sua resposta foi registrada. A oficina seguirá apenas com os itens aprovados.');
     const { tokenHash, ...safe } = b;
     return safe;
 }

@@ -13,22 +13,40 @@ export async function orderRoutes({ s, route, method, body: b, user: u }) {
         const appointment = b.appointmentId ? await ensure(s, 'appointments', b.appointmentId) : null;
         if (appointment)
             assert(appointment.status === 'agendado' && !(await s.list('orders')).some(o => o.appointmentId === appointment.id), 'Agendamento já atendido ou cancelado.', 409);
+        if (appointment) {
+            assert(b.mechanicId === undefined || Number(b.mechanicId) === appointment.mechanicId,
+                'Use o mecânico do agendamento. Remarque a agenda antes de abrir a O.S.', 409);
+            assert(b.serviceIds === undefined || (Array.isArray(b.serviceIds)
+                && b.serviceIds.length === appointment.serviceIds.length
+                && new Set(b.serviceIds).size === b.serviceIds.length
+                && b.serviceIds.every(id => appointment.serviceIds.includes(id))),
+                'Use os serviços confirmados no agendamento.', 409);
+        }
         assert(!b.type || b.type === 'normal', 'Abra a O.S. de garantia a partir de um chamado deferido.');
         const clientId = Number(b.clientId ?? appointment?.clientId), vehicleId = Number(b.vehicleId ?? appointment?.vehicleId), mechanicId = Number(b.mechanicId ?? appointment?.mechanicId), client = await ensure(s, 'clients', clientId), vehicle = await ensure(s, 'vehicles', vehicleId);
         await mechanicFrom(s, mechanicId);
         assert(client.active && vehicle.active && vehicle.clientId === clientId, 'Selecione veículo ativo vinculado ao cliente.');
         if (appointment)
             assert(appointment.clientId === clientId && appointment.vehicleId === vehicleId, 'Use o cliente e veículo do agendamento.');
-        const services = await servicesFrom(s, b.serviceIds ?? appointment?.serviceIds);
-        const startMode = b.startMode ?? (services.every(service => servicePurpose(service) === 'avaliacao') ? 'avaliacao' : 'servicos');
+        const confirmedServices = appointment?.serviceRequestId ? appointment.confirmedServices : null;
+        if (appointment?.serviceRequestId)
+            assert(Array.isArray(confirmedServices) && confirmedServices.length === appointment.serviceIds.length
+                && confirmedServices.every(service => appointment.serviceIds.includes(service.id)),
+                'Os serviços confirmados neste pedido precisam ser revisados antes da O.S.', 409);
+        const services = confirmedServices ?? await servicesFrom(s, appointment?.serviceIds ?? b.serviceIds);
+        const confirmedMode = services.every(service => servicePurpose(service) === 'avaliacao') ? 'avaliacao' : 'servicos';
+        const startMode = confirmedServices ? confirmedMode : b.startMode ?? confirmedMode;
         assert(['avaliacao', 'servicos'].includes(startMode), 'Selecione avaliação inicial ou serviços definidos.');
         assert(startMode !== 'avaliacao' || services.every(service => servicePurpose(service) === 'avaliacao'), 'Selecione apenas serviços de avaliação para iniciar uma avaliação.');
         const assessmentNotes = text(b.assessmentNotes ?? '', 'o relato inicial do cliente', 1000, true);
-        const o = { startMode, assessmentNotes, evaluationServiceIds: services.filter(service => servicePurpose(service) === 'avaliacao').map(service => service.id), number: Math.max(1000, ...(await s.list('orders')).map(o => o.number)) + 1, clientId, vehicleId, mechanicId, appointmentId: appointment?.id ?? null, originOrderId: null, type: 'normal', status: 'aberta', items: [], inspections: [], findings: [], timeline: [{ status: 'aberta', date: timestamp(), userId: u.id, userName: u.name }], closedAt: null };
+        const o = { startMode, assessmentNotes, evaluationServiceIds: services.filter(service => servicePurpose(service) === 'avaliacao').map(service => service.id), number: Math.max(1000, ...(await s.list('orders')).map(o => o.number)) + 1, clientId, vehicleId, mechanicId, appointmentId: appointment?.id ?? null, serviceRequestId: appointment?.serviceRequestId ?? null, originOrderId: null, type: 'normal', status: 'aberta', items: [], inspections: [], findings: [], timeline: [{ status: 'aberta', date: timestamp(), userId: u.id, userName: u.name }], closedAt: null };
         for (const service of services) {
-            const item = await itemData(s, { serviceId: service.id, approvalMethod: b.approvalMethod, approvalNotes: b.approvalNotes, decision: 'aprovado' }, u);
+            const item = await itemData(s, { serviceId: service.id, approvalMethod: b.approvalMethod,
+                approvalNotes: b.approvalNotes, decision: 'aprovado',
+                ...(confirmedServices ? { price: service.price, description: service.name } : {}) },
+            u, confirmedServices ? { confirmedService: service } : undefined);
             o.items.push(item);
-            await attachInspections(s, o, item);
+            await attachInspections(s, o, item, confirmedServices ? service : null);
         }
         const saved = await s.save('orders', o);
         if (appointment)
@@ -39,8 +57,16 @@ export async function orderRoutes({ s, route, method, body: b, user: u }) {
     const match = /^\/orders\/(\d+)(?:\/(items|status|inspection|execute|reverse|findings|budgets|assign))?$/.exec(route);
     if (match) {
         const o = ownOrder(u, await ensure(s, 'orders', match[1])), action = match[2];
-        if (!action && method === 'GET')
-            return { data: { order: o, items: o.items, inspections: o.inspections, budgets: (await visible(s, 'budgets', u)).filter(b => b.orderId === o.id), warranty: warrantyPolicy({ order: o, settings: await s.settings() }), tickets: (await visible(s, 'tickets', u)).filter(t => t.orderId === o.id) } };
+        if (!action && method === 'GET') {
+            const source = STAFF.includes(u.role) && o.serviceRequestId
+                ? await s.get('service_requests', o.serviceRequestId) : null;
+            return { data: { order: o, items: o.items, inspections: o.inspections,
+                sourceRequest: source ? { id: source.id, symptoms: source.symptoms,
+                    services: source.services } : null,
+                budgets: (await visible(s, 'budgets', u)).filter(b => b.orderId === o.id),
+                warranty: warrantyPolicy({ order: o, settings: await s.settings() }),
+                tickets: (await visible(s, 'tickets', u)).filter(t => t.orderId === o.id) } };
+        }
         assert(method === 'POST', 'Operação não encontrada.', 404);
         assert(!['encerrada', 'cancelada'].includes(o.status), 'Esta O.S. está encerrada ou cancelada.', 409);
         if (action === 'assign') {
@@ -61,8 +87,11 @@ export async function orderRoutes({ s, route, method, body: b, user: u }) {
                 allow(u, ['gerente', 'atendente']);
             const changed = await changeStatus(s, o, status, u);
             await s.audit(u, 'alterar', 'orders', o.id, { status });
-            if (status === 'encerrada')
-                await enqueue(s, (await ensure(s, 'clients', o.clientId)).email, `O.S. ${o.number} encerrada`, `Seu atendimento foi encerrado. A garantia dos itens cobertos começa hoje e possui ${changed.warrantyDays} dias.`);
+            if (status === 'encerrada') {
+                const client = await ensure(s, 'clients', o.clientId);
+                if (client.email)
+                    await enqueue(s, client.email, `O.S. ${o.number} encerrada`, `Seu atendimento foi encerrado. A garantia dos itens cobertos começa hoje e possui ${changed.warrantyDays} dias.`);
+            }
             return { data: changed };
         }
         else if (action === 'inspection') {

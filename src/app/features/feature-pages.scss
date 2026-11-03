@@ -90,3 +90,4 @@ mat-dialog-actions { padding: 18px 24px !important; border-top: 1px solid var(--
   .data-table tbody tr, .stock-overview > div { transition: none; }
   .stock-overview > div:hover { transform: none; }
 }
+.catalogue-request-tip{display:flex;align-items:flex-start;gap:11px;margin:15px 0 20px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-alt)}.catalogue-request-tip>mat-icon{flex:0 0 22px;color:var(--accent-strong)}.catalogue-request-tip>div{flex:1;min-width:0}.catalogue-request-tip strong{font-size:13px}.catalogue-request-tip p{margin:4px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5}.catalogue-request-tip button{flex-shrink:0}@media(max-width:620px){.catalogue-request-tip{flex-wrap:wrap}.catalogue-request-tip button{width:100%}}

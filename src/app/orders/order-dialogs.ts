@@ -7,16 +7,17 @@ import { ApiService } from '../core/api.service';
 <mat-dialog-content>
 <p class="muted">Escolha como iniciar o atendimento e registre a autorização do cliente.</p>
 <div class="start-modes" role="group" aria-label="Como iniciar o atendimento">
-<button type="button" mat-stroked-button (click)="chooseStart('avaliacao')" [class.selected]="model.startMode==='avaliacao'" [attr.aria-pressed]="model.startMode==='avaliacao'"><mat-icon>manage_search</mat-icon>Avaliação inicial</button>
-<button type="button" mat-stroked-button (click)="chooseStart('servicos')" [class.selected]="model.startMode==='servicos'" [attr.aria-pressed]="model.startMode==='servicos'"><mat-icon>build</mat-icon>Serviços já definidos</button>
+<button type="button" mat-stroked-button (click)="chooseStart('avaliacao')" [disabled]="!!sourceRequestId" [class.selected]="model.startMode==='avaliacao'" [attr.aria-pressed]="model.startMode==='avaliacao'"><mat-icon>manage_search</mat-icon>Avaliação inicial</button>
+<button type="button" mat-stroked-button (click)="chooseStart('servicos')" [disabled]="!!sourceRequestId" [class.selected]="model.startMode==='servicos'" [attr.aria-pressed]="model.startMode==='servicos'"><mat-icon>build</mat-icon>Serviços já definidos</button>
 </div>
 <p class="start-guidance" *ngIf="model.startMode==='avaliacao'">A avaliação usa o valor cadastrado no serviço. Depois da inspeção, acrescente os serviços e as peças identificados em um orçamento para aprovação do cliente.</p>
+<p class="start-guidance" *ngIf="sourceRequestId">Esta O.S. vem do pedido #{{sourceRequestId}} do catálogo. Cliente, veículo, mecânico e serviços seguem o agendamento confirmado. <a routerLink="/solicitacoes" [queryParams]="{pedido:sourceRequestId}" (click)="ref.close(null)">Ver relato original</a></p>
 <form #f="ngForm" class="form-grid">
-<mat-form-field appearance="outline"><mat-label>Cliente</mat-label><mat-select name="client" [(ngModel)]="model.clientId" required (selectionChange)="model.vehicleId=null"><mat-option *ngFor="let x of api.data().clients" [value]="x.id">{{x.name}}</mat-option></mat-select></mat-form-field>
-<mat-form-field appearance="outline"><mat-label>Veículo</mat-label><mat-select name="vehicle" [(ngModel)]="model.vehicleId" required><mat-option *ngFor="let x of vehicles" [value]="x.id">{{x.plate}} · {{x.model}}</mat-option></mat-select></mat-form-field>
-<mat-form-field appearance="outline"><mat-label>Mecânico responsável</mat-label><mat-select name="mechanic" [(ngModel)]="model.mechanicId" required><mat-option *ngFor="let x of mechanics" [value]="x.id">{{x.name}}</mat-option></mat-select></mat-form-field>
+<mat-form-field appearance="outline"><mat-label>Cliente</mat-label><mat-select name="client" [(ngModel)]="model.clientId" required [disabled]="!!sourceRequestId" (selectionChange)="model.vehicleId=null"><mat-option *ngFor="let x of api.data().clients" [value]="x.id">{{x.name}}</mat-option></mat-select></mat-form-field>
+<mat-form-field appearance="outline"><mat-label>Veículo</mat-label><mat-select name="vehicle" [(ngModel)]="model.vehicleId" required [disabled]="!!sourceRequestId"><mat-option *ngFor="let x of vehicles" [value]="x.id">{{x.plate || 'Placa pendente'}} · {{x.model}}</mat-option></mat-select></mat-form-field>
+<mat-form-field appearance="outline"><mat-label>Mecânico responsável</mat-label><mat-select name="mechanic" [(ngModel)]="model.mechanicId" required [disabled]="!!sourceRequestId"><mat-option *ngFor="let x of mechanics" [value]="x.id">{{x.name}}</mat-option></mat-select></mat-form-field>
 <mat-form-field appearance="outline"><mat-label>Agendamento de origem</mat-label><mat-select name="appointment" [(ngModel)]="model.appointmentId" (selectionChange)="fromAppointment()"><mat-option [value]="null">Atendimento sem agendamento</mat-option><mat-option *ngFor="let x of appointments" [value]="x.id">{{x.date}} {{x.time}} · {{api.vehicle(x.vehicleId)?.plate}}</mat-option></mat-select></mat-form-field>
-<mat-form-field appearance="outline" class="full"><mat-label>{{model.startMode==='avaliacao'?'Serviço de avaliação':'Serviços contratados'}}</mat-label><mat-select name="services" [(ngModel)]="model.serviceIds" multiple required><mat-option *ngFor="let x of services" [value]="x.id">{{x.name||x.description}} · {{x.price|currency:'BRL'}}</mat-option></mat-select><mat-hint *ngIf="model.startMode==='avaliacao'">Valor definido no cadastro do serviço.</mat-hint></mat-form-field>
+<mat-form-field appearance="outline" class="full"><mat-label>{{model.startMode==='avaliacao'?'Serviço de avaliação':'Serviços contratados'}}</mat-label><mat-select name="services" [(ngModel)]="model.serviceIds" multiple required [disabled]="!!sourceRequestId"><mat-option *ngFor="let x of services" [value]="x.id">{{x.name||x.description}} · {{x.price|currency:'BRL'}}</mat-option></mat-select><mat-hint *ngIf="model.startMode==='avaliacao'">Valor definido no cadastro do serviço.</mat-hint></mat-form-field>
 <p class="start-guidance full" *ngIf="model.startMode==='avaliacao'&&!evaluationServices.length">Cadastre ou edite um serviço com a finalidade “Avaliação / diagnóstico inicial” antes de abrir este atendimento.</p>
 <mat-form-field appearance="outline" class="full" *ngIf="model.startMode==='avaliacao'"><mat-label>Relato inicial do cliente</mat-label><textarea matInput name="assessmentNotes" [(ngModel)]="model.assessmentNotes" maxlength="1000" rows="2" placeholder="Descreva o sintoma ou o que deve ser avaliado"></textarea><mat-hint>Opcional. A equipe registra os resultados na folha de verificação.</mat-hint></mat-form-field>
 <mat-form-field appearance="outline"><mat-label>Forma de aprovação do cliente</mat-label><mat-select name="method" [(ngModel)]="model.approvalMethod" required><mat-option *ngFor="let method of methods" [value]="method">{{method}}</mat-option></mat-select></mat-form-field>
@@ -28,16 +29,19 @@ import { ApiService } from '../core/api.service';
 `]})
 export class CreateOrderDialog {
  model:any={clientId:null,vehicleId:null,mechanicId:null,appointmentId:null,startMode:'servicos',serviceIds:[],assessmentNotes:'',approvalMethod:'presencial',approvalNotes:''};busy=false;error='';
- constructor(public api:ApiService,private ref:MatDialogRef<CreateOrderDialog>,@Inject(MAT_DIALOG_DATA) data:any){this.model.approvalMethod=this.methods[0];if(data?.appointmentId){this.model.appointmentId=data.appointmentId;this.fromAppointment();}}
+ private confirmedSnapshot:any[]=[];
+ constructor(public api:ApiService,public ref:MatDialogRef<CreateOrderDialog>,@Inject(MAT_DIALOG_DATA) data:any){this.model.approvalMethod=this.methods[0];if(data?.appointmentId){this.model.appointmentId=data.appointmentId;this.fromAppointment();}}
  get vehicles(){return this.api.data().vehicles.filter((x:any)=>x.clientId===this.model.clientId&&x.active!==false);}
  get activeServices(){return this.api.data().services.filter((x:any)=>x.active!==false);}
- get evaluationServices(){return this.activeServices.filter((x:any)=>x.purpose==='avaliacao');}
- get services(){return this.model.startMode==='avaliacao'?this.evaluationServices:this.activeServices;}
+ get confirmedServices(){return this.confirmedSnapshot;}
+ get evaluationServices(){return (this.sourceRequestId?this.confirmedServices:this.activeServices).filter((x:any)=>x.purpose==='avaliacao');}
+ get services(){return this.sourceRequestId?this.confirmedServices:this.model.startMode==='avaliacao'?this.evaluationServices:this.activeServices;}
  get mechanics(){return this.api.data().users.filter((x:any)=>x.role==='mecanico'&&x.active);}
  get appointments(){return this.api.data().appointments.filter((x:any)=>x.status!=='cancelado'&&!this.api.data().orders.some((o:any)=>o.appointmentId===x.id));}
+ get sourceRequestId():number|null{return Number(this.appointments.find((x:any)=>x.id===this.model.appointmentId)?.serviceRequestId)||null;}
  get methods(){return (this.api.data().settings as any).approvalMethods||['presencial','telefone','mensagem'];}
- chooseStart(mode:string){if(this.model.startMode===mode)return;this.model.startMode=mode;this.model.serviceIds=mode==='avaliacao'&&this.evaluationServices.length===1?[this.evaluationServices[0].id]:[];this.model.assessmentNotes='';}
- fromAppointment(){const ap=this.appointments.find((x:any)=>x.id===this.model.appointmentId);if(ap){const selected=this.activeServices.filter((x:any)=>ap.serviceIds.includes(x.id));Object.assign(this.model,{clientId:ap.clientId,vehicleId:ap.vehicleId,mechanicId:ap.mechanicId,serviceIds:[...ap.serviceIds],startMode:selected.length&&selected.every((x:any)=>x.purpose==='avaliacao')?'avaliacao':'servicos'});}}
+ chooseStart(mode:string){if(this.model.startMode===mode||this.sourceRequestId)return;this.model.startMode=mode;this.model.serviceIds=mode==='avaliacao'&&this.evaluationServices.length===1?[this.evaluationServices[0].id]:[];}
+ fromAppointment(){const ap=this.appointments.find((x:any)=>x.id===this.model.appointmentId);this.confirmedSnapshot=ap?.serviceRequestId?(ap.confirmedServices||[]).map((snapshot:any)=>({...(this.api.data().services.find((service:any)=>service.id===snapshot.id)||{}),...snapshot})):[];if(ap){const selected=ap.serviceRequestId?this.confirmedSnapshot:this.api.data().services.filter((x:any)=>ap.serviceIds.includes(x.id));Object.assign(this.model,{clientId:ap.clientId,vehicleId:ap.vehicleId,mechanicId:ap.mechanicId,serviceIds:[...ap.serviceIds],startMode:selected.length&&selected.every((x:any)=>x.purpose==='avaliacao')?'avaliacao':'servicos'});}}
  async save(){if(this.busy||!this.model.serviceIds.length)return;this.busy=true;this.error='';try{const res=await this.api.post('/orders',this.model);await this.api.load();this.ref.close(res.order||res);}catch(e:any){this.error=e.message;}finally{this.busy=false;}}
 }
 

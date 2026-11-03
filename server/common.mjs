@@ -55,12 +55,15 @@ export async function visible(s, table, u) {
     }
     if (u.role === 'mecanico') {
         const orders = (await s.list('orders')).filter(o => o.mechanicId === u.id);
+        const appointments = (await s.list('appointments')).filter(a => a.mechanicId === u.id);
+        const clientIds = new Set([...orders.map(o => o.clientId), ...appointments.map(a => a.clientId)]);
+        const vehicleIds = new Set([...orders.map(o => o.vehicleId), ...appointments.map(a => a.vehicleId)]);
         if (['orders', 'appointments'].includes(table))
             return rows.filter(r => r.mechanicId === u.id);
         if (table === 'clients')
-            return rows.filter(r => orders.some(o => o.clientId === r.id)).map(({ id, name, active }) => ({ id, name, active }));
+            return rows.filter(r => clientIds.has(r.id)).map(({ id, name, active }) => ({ id, name, active }));
         if (table === 'vehicles')
-            return rows.filter(r => orders.some(o => o.vehicleId === r.id));
+            return rows.filter(r => vehicleIds.has(r.id));
         if (table === 'budgets')
             return [];
         if (table === 'tickets')
@@ -83,6 +86,6 @@ export async function listResult(rows, url, s) {
 }
 export async function enqueue(s, to, subject, body, kind = 'notificacao') { return await s.save('emails', { to, subject, text: body, link: body.match(/https?:\/\/[^\s]+/u)?.[0] ?? null, kind, status: process.env.SMTP_HOST ? 'pendente' : 'capturado', attempts: 0, sentAt: null, nextAttemptAt: timestamp(), error: null }); }
 export async function resetLink(s, u, base, kind = 'recuperacao') { const token = randomBytes(32).toString('base64url'); await s.db.prepare('INSERT INTO reset_tokens(token,userId,expiresAt) VALUES(?,?,?)').run(hashToken(token), u.id, Date.now() + DAY); await enqueue(s, u.email, kind === 'convite' ? 'Seu acesso ao OScar' : 'Recuperação de acesso ao OScar', `Olá, ${u.name.split(' ')[0]}. Defina sua senha pelo link de uso único válido por 24 horas: ${base}/redefinir/${token}`, kind); }
-export async function dashboard(s, u) { const orders = await visible(s, 'orders', u), budgets = await visible(s, 'budgets', u), parts = await visible(s, 'parts', u), closed = orders.filter(o => o.closedAt), decisions = budgets.flatMap(b => b.items).filter(i => i.decision !== 'pendente'); return { ordersByStatus: Object.fromEntries(['aberta', 'inspecao', 'aguardando_aprovacao', 'execucao', 'concluida', 'encerrada', 'cancelada'].map(status => [status, orders.filter(o => o.status === status).length])), openOrders: orders.filter(o => !['encerrada', 'cancelada'].includes(o.status)).length, averageStayHours: closed.length ? round(closed.reduce((n, o) => n + Math.max(0, (Date.parse(o.closedAt) - Date.parse(o.createdAt)) / 3600000), 0) / closed.length) : 0, lowStockCount: parts.filter(p => p.lowStock).length, approvalRate: decisions.length ? round(decisions.filter(i => i.decision === 'aprovado').length / decisions.length * 100) : 0, appointmentsToday: (await visible(s, 'appointments', u)).filter(a => a.date === new Date().toISOString().slice(0, 10) && a.status === 'agendado').length }; }
+export async function dashboard(s, u) { const orders = await visible(s, 'orders', u), budgets = await visible(s, 'budgets', u), parts = await visible(s, 'parts', u), closed = orders.filter(o => o.closedAt), decisions = budgets.flatMap(b => b.items).filter(i => i.decision !== 'pendente'), today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(new Date()); return { ordersByStatus: Object.fromEntries(['aberta', 'inspecao', 'aguardando_aprovacao', 'execucao', 'concluida', 'encerrada', 'cancelada'].map(status => [status, orders.filter(o => o.status === status).length])), openOrders: orders.filter(o => !['encerrada', 'cancelada'].includes(o.status)).length, averageStayHours: closed.length ? round(closed.reduce((n, o) => n + Math.max(0, (Date.parse(o.closedAt) - Date.parse(o.createdAt)) / 3600000), 0) / closed.length) : 0, lowStockCount: parts.filter(p => p.lowStock).length, approvalRate: decisions.length ? round(decisions.filter(i => i.decision === 'aprovado').length / decisions.length * 100) : 0, appointmentsToday: (await visible(s, 'appointments', u)).filter(a => a.date === today && a.status === 'agendado').length }; }
 export const roundQuantity = value => Number(value.toFixed(3));
 export function quantityValue(value, label = 'a quantidade') { number(value, label, 0.001, 1000000); assert(Math.abs(value * 1000 - Math.round(value * 1000)) < 0.000001, 'Use no máximo três casas decimais para a quantidade.'); return value; }
