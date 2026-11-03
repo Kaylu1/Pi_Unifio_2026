@@ -8,27 +8,40 @@ import { ConfirmDialog } from '../core/confirm-dialog';
 import { CreateOrderDialog, OrderItemDialog, BudgetEditorDialog, ReasonDialog, BudgetDecisionDialog } from './order-dialogs';
 
 @Component({selector:'app-orders',standalone:false,templateUrl:'./orders.html'})
-export class OrdersPage {
+export class OrdersPage implements OnInit, OnDestroy {
  query='';status='';page=0;size=10;statusLabel=statusLabel;
+ private autoOpenedAppointmentId:number|null=null;
+ private querySubscription?:Subscription;
  readonly states=['aberta','inspecao','aguardando_aprovacao','execucao','concluida','encerrada','cancelada'];
- constructor(public api:ApiService,private dialog:MatDialog,private router:Router,route:ActivatedRoute){this.status=route.snapshot.queryParamMap.get('status')||'';const appointmentId=Number(route.snapshot.queryParamMap.get('appointmentId'));if(appointmentId&&this.canCreate)setTimeout(()=>this.open(appointmentId),0);}
+ constructor(public api:ApiService,private dialog:MatDialog,private router:Router,private route:ActivatedRoute){}
+ ngOnInit():void{
+  this.querySubscription=this.route.queryParamMap.subscribe(params=>{
+   this.status=params.get('status')||'';
+   const appointmentId=Number(params.get('appointmentId'));
+   if(!appointmentId||!this.canCreate||this.autoOpenedAppointmentId===appointmentId)return;
+   this.autoOpenedAppointmentId=appointmentId;
+   setTimeout(()=>{if(this.router.url.startsWith('/ordens'))this.open(appointmentId);},0);
+  });
+ }
+ ngOnDestroy():void{this.querySubscription?.unsubscribe();}
  get rows():any[]{const q=this.query.toLowerCase().trim();return this.api.data().orders.filter((x:any)=>(!this.status||x.status===this.status)&&(!q||[x.number,x.id,this.api.client(x.clientId)?.name,this.api.vehicle(x.vehicleId)?.plate,this.api.vehicle(x.vehicleId)?.model].join(' ').toLowerCase().includes(q))).sort((a:any,b:any)=>b.number-a.number);}
  get visible(){return this.rows.slice(this.page*this.size,(this.page+1)*this.size);}
  get canCreate(){return ['gerente','atendente'].includes(this.api.user()?.role);}
- open(appointmentId?:number){this.dialog.open(CreateOrderDialog,{width:'720px',disableClose:true,data:{appointmentId}}).afterClosed().subscribe((order:any)=>{if(order)this.router.navigate(['/ordens',order.id]);});}
+ open(appointmentId?:number){this.dialog.open(CreateOrderDialog,{width:'720px',disableClose:true,closeOnNavigation:false,data:{appointmentId}}).afterClosed().subscribe((order:any)=>{if(order)this.router.navigate(['/ordens',order.id]);});}
 }
 
 @Component({selector:'app-order-detail',standalone:false,templateUrl:'./order-detail.html',styleUrls:['./order-detail.scss','./order-assessment.scss']})
 export class OrderDetailPage implements OnInit, OnDestroy {
- order:any=null;error='';busy=false;pdfBusyId:number|null=null;selectedTab=0;statusLabel=statusLabel;private subscription?:Subscription;
+ order:any=null;sourceRequest:any=null;error='';busy=false;pdfBusyId:number|null=null;selectedTab=0;statusLabel=statusLabel;private subscription?:Subscription;
  readonly states=['aberta','inspecao','aguardando_aprovacao','execucao','concluida','encerrada'];
  constructor(public api:ApiService,private route:ActivatedRoute,private dialog:MatDialog){}
  ngOnInit(){this.subscription=this.route.paramMap.subscribe(()=>{void this.reload();});}
  ngOnDestroy(){this.subscription?.unsubscribe();}
- async reload(){this.error='';try{const data=await this.api.get('/orders/'+this.route.snapshot.paramMap.get('id'));this.order=data.order||data;}catch(e:any){this.error=e.message;}}
+ async reload(){this.error='';try{const data=await this.api.get('/orders/'+this.route.snapshot.paramMap.get('id'));this.order=data.order||data;this.sourceRequest=data.sourceRequest||null;}catch(e:any){this.error=e.message;}}
  get items():any[]{return this.order?.items||[];}
  get inspections():any[]{return this.order?.inspections||[];}
  get evaluationOrder(){return this.order?.startMode==='avaliacao'||this.order?.evaluationServiceIds?.length>0||this.items.some(x=>x.source==='inicial'&&x.servicePurpose==='avaliacao');}
+ get mixedEvaluationOrder(){return this.order?.startMode==='servicos'&&this.order?.evaluationServiceIds?.length>0;}
  get activeBudget(){return this.budgets.find(x=>['rascunho','publicado'].includes(x.status));}
  get canPrepareBudget(){return ['inspecao','execucao','aguardando_aprovacao'].includes(this.order?.status)&&!this.activeBudget;}
  get evaluationGuidance(){const guidance:Record<string,string>={aberta:'Inicie a inspeção para avaliar o veículo e registrar os resultados.',inspecao:'Registre as necessidades identificadas e prepare um orçamento com os serviços e as peças necessários.',aguardando_aprovacao:'Aguarde a decisão do cliente. Os itens pendentes dependem dessa aprovação para serem executados.',execucao:'Execute os itens aprovados. Novas necessidades podem receber um orçamento complementar.',concluida:'A avaliação e os itens aprovados estão concluídos.',encerrada:'Atendimento encerrado. Consulte a avaliação, os orçamentos e o histórico.',cancelada:'Atendimento cancelado. Os registros da avaliação permanecem no histórico.'};return guidance[this.order?.status]||'';}

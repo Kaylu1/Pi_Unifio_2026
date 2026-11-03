@@ -4,7 +4,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { assert, DomainError, assertNoOverlap, warrantyPolicy } from './domain.mjs';
 import { timestamp, hashPassword } from './auth-crypto.mjs';
 import { STAFF, APPROVALS, WRITERS, LISTS, ensure, allow, ownOrder, text, number, round, dateValue, visible, listResult, enqueue, resetLink, partPolicy, safeUser, dashboard, roundQuantity, quantityValue } from './common.mjs';
-import { entityRecord, servicesFrom, mechanicFrom, appointmentData } from './entities.mjs';
+import { entityRecord, servicesFrom, mechanicFrom, appointmentData, workshopNow } from './entities.mjs';
 import { attachInspections } from './workflow.mjs';
 import { anonymizeClient, purgeClientBackups } from './privacy.mjs';
 import { serviceRequestSummary } from './service-requests.mjs';
@@ -28,10 +28,28 @@ export async function operationsRoutes({ s, route, method, body: b, user: u, url
     }
     if (route === '/availability' && method === 'GET') {
         allow(u, ['gerente', 'atendente']);
-        const date = dateValue(url.searchParams.get('date')), services = await servicesFrom(s, String(url.searchParams.get('serviceIds') ?? '').split(',').filter(Boolean).map(Number)), settings = await s.settings(), durationMinutes = services.reduce((n, r) => n + r.durationMinutes, 0), slots = [];
+        const date = dateValue(url.searchParams.get('date'));
+        const serviceIds = String(url.searchParams.get('serviceIds') ?? '').split(',').filter(Boolean).map(Number);
         const excludeId = url.searchParams.get('excludeAppointmentId') ? Number(url.searchParams.get('excludeAppointmentId')) : undefined;
+        const existing = excludeId ? await ensure(s, 'appointments', excludeId) : null;
+        let durationMinutes;
+        if (existing?.serviceRequestId) {
+            assert(serviceIds.length === existing.serviceIds.length
+                && new Set(serviceIds).size === serviceIds.length
+                && serviceIds.every(id => existing.serviceIds.includes(id)),
+                'Não altere serviços de um pedido confirmado na remarcação.', 409);
+            durationMinutes = existing.durationMinutes;
+        } else {
+            const services = await servicesFrom(s, serviceIds);
+            durationMinutes = services.reduce((sum, service) => sum + service.durationMinutes, 0);
+        }
+        const settings = await s.settings(), slots = [];
+        const current = workshopNow();
+        assert(date >= current.date, 'Escolha hoje ou uma data futura para consultar horários.');
         for (let minutes = settings.openingHour * 60; minutes + durationMinutes <= settings.closingHour * 60; minutes += settings.appointmentIntervalMinutes) {
             const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+            if (date === current.date && time <= current.time)
+                continue;
             for (const mechanic of (await s.list('users')).filter(u => u.active && u.role === 'mecanico')) {
                 try {
                     assertNoOverlap({ appointments: await s.list('appointments'), mechanicId: mechanic.id, date, time, durationMinutes, excludeId });
@@ -49,7 +67,9 @@ export async function operationsRoutes({ s, route, method, body: b, user: u, url
         allow(u, ['gerente', 'atendente']);
         const r = await s.save('appointments', await appointmentData(s, b));
         await s.audit(u, 'criar', 'appointments', r.id);
-        await enqueue(s, (await ensure(s, 'clients', r.clientId)).email, 'Agendamento confirmado no OScar', `Agendamento confirmado para ${r.date}, às ${r.time}. Mecânico: ${(await ensure(s, 'users', r.mechanicId)).name}.`);
+        const client = await ensure(s, 'clients', r.clientId);
+        if (client.email)
+            await enqueue(s, client.email, 'Agendamento confirmado no OScar', `Agendamento confirmado para ${r.date}, às ${r.time}. Mecânico: ${(await ensure(s, 'users', r.mechanicId)).name}.`);
         return { status: 201, data: r };
     }
     const am = /^\/appointments\/(\d+)$/.exec(route);
@@ -59,7 +79,21 @@ export async function operationsRoutes({ s, route, method, body: b, user: u, url
         assert(p.status === 'agendado', 'Apenas agendamentos em aberto podem ser alterados.', 409);
         const reason = text(b.reason, 'o motivo do cancelamento ou remarcação', 500), r = await s.save('appointments', b.status === 'cancelado' ? { ...p, status: 'cancelado', reason } : await appointmentData(s, { ...b, reason }, p));
         await s.audit(u, 'alterar', 'appointments', r.id, { reason });
-        await enqueue(s, (await ensure(s, 'clients', r.clientId)).email, 'Atualização do agendamento OScar', `Agendamento ${r.status === 'cancelado' ? 'cancelado' : 'remarcado para ' + r.date + ' às ' + r.time}. Motivo: ${reason}`);
+        if (r.status === 'cancelado' && p.serviceRequestId) {
+            const request = await s.get('service_requests', p.serviceRequestId);
+            if (request && !request.anonymizedAt && request.appointmentId === p.id) {
+                await s.save('service_requests', {
+                    ...request, status: 'em_contato', appointmentId: null,
+                    confirmedAt: null, confirmedBy: null,
+                    handledBy: u.id, handledAt: timestamp(),
+                });
+                await s.audit(u, 'alterar', 'service_requests', request.id,
+                    { status: 'em_contato', cancelledAppointmentId: p.id });
+            }
+        }
+        const client = await ensure(s, 'clients', r.clientId);
+        if (client.email)
+            await enqueue(s, client.email, 'Atualização do agendamento OScar', `Agendamento ${r.status === 'cancelado' ? 'cancelado' : 'remarcado para ' + r.date + ' às ' + r.time}. Motivo: ${reason}`);
         return { data: r };
     }
     if (route === '/stock/entries' && method === 'POST') {
@@ -182,6 +216,13 @@ export async function operationsRoutes({ s, route, method, body: b, user: u, url
                 await s.save('users', { ...user, name: r.name, email: r.email, active: r.active });
                 if (!r.active)
                     await s.db.prepare('DELETE FROM sessions WHERE userId=?').run(user.id);
+            } else if (r.active && r.email) {
+                assert(!(await s.list('users')).some(x => x.email === r.email),
+                    'E-mail utilizado por outra conta.', 409);
+                const account = await s.save('users', {
+                    name: r.name, email: r.email, role: 'cliente', clientId: r.id, active: true,
+                });
+                await resetLink(s, account, origin ?? 'https://localhost:4201', 'convite');
             }
         }
         if (table === 'users' && method === 'POST' && !b.password)

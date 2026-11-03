@@ -1,4 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AppointmentDialog, EntityPage } from '../features/feature-pages';
 import { AgendaRow, CalendarEvent, DAY_END, DAY_START, HALF_HOUR_HEIGHT, appointmentDuration, clockTime, isCancelled, layoutAppointments, timeMinutes } from './agenda-layout';
 
@@ -21,8 +22,12 @@ export class AgendaPage extends EntityPage {
   private columnsCacheData: unknown;
   private columnsCache: MechanicColumn[] = [];
 
-  constructor() {
+  constructor(route: ActivatedRoute) {
     super({ key: 'appointments', endpoint: '/appointments', title: 'Agenda da oficina', singular: 'agendamento', description: 'Horários e atendimentos, organizados por mecânico.', fields: [], columns: [], roles: ['gerente', 'atendente'] });
+    const date = route.snapshot.queryParamMap.get('date');
+    if (date) this.setDay(date);
+    const appointmentId = Number(route.snapshot.queryParamMap.get('appointmentId'));
+    if (appointmentId) this.selectedId = appointmentId;
   }
 
   get today(): string { return this.localDate(new Date()); }
@@ -88,6 +93,7 @@ export class AgendaPage extends EntityPage {
   endTime(row: AgendaRow): string { return clockTime(timeMinutes(row['time']) + this.duration(row)); }
   clientName(row: AgendaRow): string { return this.relation('clients', row['clientId']) === '—' ? 'Cliente do atendimento' : this.relation('clients', row['clientId']); }
   vehicleLabel(row: AgendaRow): string { return this.relation('vehicles', row['vehicleId']) === '—' ? 'Veículo do atendimento' : this.relation('vehicles', row['vehicleId']); }
+  registrationPending(row: AgendaRow): boolean { return this.api.client(Number(row['clientId']))?.registrationStatus === 'provisorio' || this.api.vehicle(Number(row['vehicleId']))?.registrationStatus === 'provisorio'; }
   serviceNames(row: AgendaRow): string { return (row['serviceIds'] || []).map((id: number) => this.relation('services', id)).join(' · '); }
   eventLabel(row: AgendaRow): string { return `${row['time']} às ${this.endTime(row)}, ${this.clientName(row)}, ${this.vehicleLabel(row)}, ${this.statusLabel(row['status'])}. Ver atendimento.`; }
   private matchesSearch(row: AgendaRow): boolean {

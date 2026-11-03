@@ -1,7 +1,7 @@
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
-import { redactServiceRequest } from './privacy.mjs';
+import { redactServiceRequest, serviceRequestBelongsToClient } from './privacy.mjs';
 
 const { Pool } = pg;
 const SCHEMA = 'oscar_private';
@@ -111,8 +111,7 @@ function redactSnapshot(input, erasedIds, erasedRequestIds = []) {
   const phoneDigits=String(client.phone??'').replace(/\D/g,'');
   const plates=new Set(vehicles.map(v=>String(v.plate??'').replace(/[^a-z0-9]/gi,'').toUpperCase()).filter(Boolean));
   for(const [index,request] of (records.service_requests??[]).entries())
-   if((phoneDigits.length>=10&&String(request.phone??'').replace(/\D/g,'')===phoneDigits)
-    ||plates.has(String(request.plate??'').replace(/[^a-z0-9]/gi,'').toUpperCase())){
+   if(serviceRequestBelongsToClient(request,{clientId,vehicleIds,phoneDigits,plates})){
     records.service_requests[index]=redactServiceRequest(request);erasedRequests.add(request.id);
    }
   const name='Cliente anonimizado '+clientId,email='anonimizado-'+clientId+'@oscar.invalid';
@@ -123,6 +122,7 @@ function redactSnapshot(input, erasedIds, erasedRequestIds = []) {
   for (const message of records.emails??[])if(identifiers.some(id=>JSON.stringify(message).includes(id)))
    Object.assign(message,{to:email,subject:'Dados removidos',text:'Conteúdo removido por solicitação do titular.',link:null,status:'anonimizado'});
   for (const order of orders) {
+   order.assessmentNotes='';
    for (const item of [...(order.items??[]),...(order.findings??[])]) {
     item.approvalNotes='';item.justification='';
     for(const reversal of item.reversals??[])reversal.reason='';

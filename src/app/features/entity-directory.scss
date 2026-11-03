@@ -60,3 +60,4 @@
 @media (max-width:620px) { .client-directory,.fleet-grid { grid-template-columns: 1fr; gap: 16px; } .contact-card,.vehicle-card { padding: 22px; } .entity-toolbar { gap: 0; } .result-count { margin: 0 0 20px; } .entity-toolbar .search-field { max-width: none; } .client-context { padding: 24px; } }
 @media(prefers-reduced-motion:reduce) { .contact-card { transition: none; } }
 .client-context{scroll-margin-top:20px}.context-heading h2:focus-visible{outline:3px solid var(--accent-glow);outline-offset:5px}.contact-actions .mat-mdc-icon-button mat-icon{font-size:20px;width:20px;height:20px}
+.provisional-badge{display:inline-flex;align-items:center;width:max-content;margin-top:6px;padding:4px 8px;border-radius:999px;background:var(--warning-soft);color:var(--warning);font-size:11px;font-weight:700}

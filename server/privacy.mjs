@@ -18,6 +18,16 @@ export function redactServiceRequest(request, at = timestamp()) {
     };
 }
 
+/** O vínculo confirmado prevalece sobre contato/placa compartilhados por outra pessoa. */
+export function serviceRequestBelongsToClient(request, { clientId, vehicleIds, phoneDigits, plates }) {
+    if (request.clientId !== undefined && request.clientId !== null)
+        return Number(request.clientId) === clientId;
+    if (request.vehicleId !== undefined && request.vehicleId !== null)
+        return vehicleIds.has(Number(request.vehicleId));
+    return (phoneDigits.length >= 10 && String(request.phone ?? '').replace(/\D/g, '') === phoneDigits)
+        || plates.has(String(request.plate ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase());
+}
+
 export async function anonymizeServiceRequest(store, requestId, actor) {
     const request = await ensure(store, 'service_requests', requestId);
     const redacted = await store.save('service_requests', redactServiceRequest(request));
@@ -62,8 +72,7 @@ export async function anonymizeClient(store, clientId, actor) {
     const phoneDigits = String(client.phone ?? '').replace(/\D/g, '');
     const plates = new Set(vehicles.map(v => String(v.plate ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase()).filter(Boolean));
     const linkedRequests = (await s.list('service_requests')).filter(request =>
-        (phoneDigits.length >= 10 && String(request.phone ?? '').replace(/\D/g, '') === phoneDigits)
-        || plates.has(String(request.plate ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase()));
+        serviceRequestBelongsToClient(request, { clientId: client.id, vehicleIds, phoneDigits, plates }));
     const r = await s.save('clients', { ...client, name: `Cliente anonimizado ${client.id}`, cpf: '', phone: '', email: `anonimizado-${client.id}@oscar.invalid`, active: false, anonymizedAt: timestamp() });
     for (const user of users) {
         await s.save('users', { ...user, name: r.name, email: `anonimizado-user-${user.id}@oscar.invalid`, active: false, passwordHash: hashPassword(randomBytes(32).toString('hex')) });
@@ -75,6 +84,7 @@ export async function anonymizeClient(store, clientId, actor) {
     for (const e of (await s.list('emails')).filter(e => e.to === client.email || identifiers.some(value => String(e.text).includes(value))))
         await s.save('emails', { ...e, to: r.email, text: 'Conteúdo removido por solicitação do titular.', subject: 'Dados removidos', link: null, status: 'anonimizado' });
     for (const o of orders) {
+        o.assessmentNotes = '';
         for (const item of [...o.items, ...o.findings]) {
             item.approvalNotes = '';
             item.justification = '';
@@ -116,6 +126,12 @@ export async function purgeClientBackups(store, clientId, actor) {
     const folder = resolve(dirname(store.filename), 'backups');
     if (!existsSync(folder))
         return { processed: 0 };
+    // Uma cópia anterior à confirmação não tem clientId no pedido. Os vínculos atuais
+    // da agenda/O.S. ainda identificam o pedido que deve ser apagado nessa cópia.
+    const requestIds = new Set([
+        ...(await store.list('appointments')).filter(a => a.clientId === clientId).map(a => a.serviceRequestId),
+        ...(await store.list('orders')).filter(o => o.clientId === clientId).map(o => o.serviceRequestId),
+    ].filter(id => Number.isSafeInteger(id) && id > 0));
     let processed = 0;
     for (const file of readdirSync(folder)) {
         if (!/^oscar-\d{4}-\d{2}-\d{2}\.sqlite$/.test(file))
@@ -125,8 +141,19 @@ export async function purgeClientBackups(store, clientId, actor) {
             throw new Error('Caminho de backup inválido.');
         const copy = createStore({ filename: path, seed: false });
         try {
-            if (await copy.get('clients', clientId)) {
-                await copy.transaction(async () => await anonymizeClient(copy, clientId, actor));
+            const hasClient = Boolean(await copy.get('clients', clientId));
+            const olderRequests = [];
+            for (const requestId of requestIds)
+                if (await copy.get('service_requests', requestId)) olderRequests.push(requestId);
+            if (hasClient || olderRequests.length) {
+                await copy.transaction(async () => {
+                    if (hasClient) await anonymizeClient(copy, clientId, actor);
+                    for (const requestId of olderRequests) {
+                        const request = await copy.get('service_requests', requestId);
+                        if (request && !request.anonymizedAt)
+                            await anonymizeServiceRequest(copy, requestId, actor);
+                    }
+                });
                 await copy.db.exec('PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);');
                 processed++;
             }

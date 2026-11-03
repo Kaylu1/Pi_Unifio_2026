@@ -77,16 +77,38 @@ export class ApiService {
   }
 
   async refreshServiceRequests(notifyNew = true): Promise<void> {
-    if (!this.isStaff() || this.requestRefreshInFlight || document.visibilityState !== 'visible') return;
+    if (!this.isStaff() || this.requestRefreshInFlight || this.loading() || document.visibilityState !== 'visible') return;
     this.requestRefreshInFlight = true;
     const userId = this.user().id;
     try {
       const summary = await this.get('/service-requests/summary');
       if (this.user()?.id !== userId || !Array.isArray(summary?.recentOpen)) return;
+      if (this.loading()) return;
       const latestId = Number(summary.latestPendingId) || 0;
       const hasNew = latestId > this.newestKnownRequestId;
+      const previous = this.data().serviceRequests;
+      const signature = (value: any) => JSON.stringify([
+        value?.openCount, value?.pendingCount, value?.latestPendingId,
+        (value?.recentOpen || []).map((request: any) => [request.id, request.status, request.updatedAt, request.appointmentId])
+      ]);
+      const changed = signature(previous) !== signature(summary);
+      const mechanic = this.user()?.role === 'mecanico';
+      const priorAssignments = mechanic ? new Set((this.data().appointments || [])
+        .filter((appointment: any) => appointment.mechanicId === userId && appointment.serviceRequestId && appointment.status === 'agendado')
+        .map((appointment: any) => appointment.id)) : new Set<number>();
       this.newestKnownRequestId = Math.max(this.newestKnownRequestId, latestId);
-      this.data.update(current => ({ ...current, serviceRequests: summary }));
+      if (changed) {
+        await this.load();
+        if (mechanic && this.user()?.id === userId) {
+          const newAssignments = (this.data().appointments || []).filter((appointment: any) =>
+            appointment.mechanicId === userId && appointment.serviceRequestId && appointment.status === 'agendado' && !priorAssignments.has(appointment.id));
+          if (newAssignments.length) this.notify(newAssignments.length === 1
+            ? `Novo atendimento do pedido #${newAssignments[0].serviceRequestId} atribuído a você. Confira a agenda.`
+            : `${newAssignments.length} atendimentos de pedidos atribuídos a você. Confira a agenda.`);
+        }
+      } else {
+        this.data.update(current => ({ ...current, serviceRequests: summary }));
+      }
       if (notifyNew && hasNew) this.notify(`Nova solicitação #${latestId} recebida no catálogo. Confira a fila.`);
     } catch {
       // A atualização automática é retomada no próximo intervalo ou ao voltar para a aba.

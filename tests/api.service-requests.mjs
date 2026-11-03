@@ -83,8 +83,11 @@ test('Solicitação pública soma preços do catálogo, fica pendente e chega ap
  const done = await request(a, '/service-requests/' + record.id, {
   method: 'PUT', session: staff, body: { status: 'atendida' },
  });
- assert.equal(done.status, 200);
+ assert.equal(done.status, 409);
  assert.equal((await request(a, '/appointments', { session: staff })).data.total, 3);
+ assert.equal((await request(a, '/service-requests/' + record.id, {
+  method: 'PUT', session: staff, body: { status: 'cancelada' },
+ })).status, 200);
 });
 
 test('painel resume pedidos abertos para a equipe, sem permitir alterações por mecânicos ou leitura por clientes', async t => {
@@ -127,6 +130,9 @@ test('painel resume pedidos abertos para a equipe, sem permitir alterações por
  assert.equal(summary.data.recentOpen.find(row => row.id === first.data.id).status, 'em_contato');
  assert.equal((await request(a, '/service-requests/' + first.data.id, {
   method: 'PUT', session: manager, body: { status: 'atendida' },
+ })).status, 409);
+ assert.equal((await request(a, '/service-requests/' + first.data.id, {
+  method: 'PUT', session: manager, body: { status: 'cancelada' },
  })).status, 200);
  assert.equal((await request(a, '/service-requests/summary', { session: manager })).data.openCount, 1);
 });
