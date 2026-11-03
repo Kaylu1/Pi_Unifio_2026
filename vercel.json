@@ -4,7 +4,6 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "dist/oscar/browser",
-  "public": false,
   "functions": {
     "api/index.mjs": {
       "maxDuration": 60,
