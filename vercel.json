@@ -11,6 +11,14 @@
     }
   },
   "crons": [{ "path": "/api/_maintenance", "schedule": "0 6 * * *" }],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": { "eq": "pi-unifio-2026-z1wc.vercel.app" } }],
+      "destination": "https://pi-unifio-2026.vercel.app/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/api", "destination": "/api/index?__oscar_path=" },
     { "source": "/api/:path*", "destination": "/api/index?__oscar_path=:path*" },
