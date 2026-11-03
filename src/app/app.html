@@ -1,0 +1,38 @@
+<a class="skip-link" href="#main-content" (click)="skipToContent($event)">Ir para o conteúdo</a>
+<ng-container *ngIf="publicPage; else workspace">
+  <div class="public-appearance" [class.login-route]="path.startsWith('/entrar')">
+    <button mat-icon-button class="theme-toggle public-theme-toggle" data-theme-toggle type="button" (click)="theme.toggle()" [attr.aria-label]="theme.actionLabel()" [attr.aria-pressed]="theme.mode()==='dark'" [matTooltip]="theme.actionLabel()"><mat-icon>{{theme.icon()}}</mat-icon></button>
+    <main id="main-content" tabindex="-1"><router-outlet></router-outlet></main>
+  </div>
+</ng-container>
+<ng-template #workspace>
+  <div class="app-frame" [class.is-collapsed]="desktopCollapsed" *ngIf="api.ready(); else loading">
+    <button class="nav-backdrop" *ngIf="mobileOpen" aria-label="Fechar navegação" (click)="mobileOpen=false"></button>
+    <aside id="primary-navigation" class="sidebar" [class.is-open]="mobileOpen" aria-label="Navegação principal">
+      <a routerLink="/painel" class="brand"><span class="brand-mark" aria-hidden="true"><mat-icon>garage</mat-icon></span><span>OScar<small>Gestão de oficinas</small></span></a>
+      <nav>
+        <ng-container *ngFor="let item of items; let i=index">
+          <p class="nav-group" *ngIf="i===0||items[i-1].group!==item.group">{{item.group}}</p>
+          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{exact:item.path==='/painel'}" ariaCurrentWhenActive="page"><mat-icon>{{item.icon}}</mat-icon><span>{{item.label}}</span><mat-icon class="nav-arrow" aria-hidden="true">arrow_forward</mat-icon></a>
+        </ng-container>
+      </nav>
+      <a class="sidebar-catalogue" routerLink="/catalogo"><mat-icon>open_in_new</mat-icon><span>Catálogo de serviços<small>Serviços e valores publicados</small></span><mat-icon class="catalogue-arrow">north_east</mat-icon></a>
+
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-location"><button mat-icon-button class="mobile-menu" (click)="toggleNavigation()" [attr.aria-label]="navigationOpen ? 'Recolher navegação' : 'Abrir navegação'" [attr.aria-expanded]="navigationOpen" aria-controls="primary-navigation"><mat-icon>{{isMobile ? (mobileOpen ? 'close' : 'menu') : (desktopCollapsed ? 'menu' : 'menu_open')}}</mat-icon></button><span class="workspace-name"><mat-icon aria-hidden="true">garage</mat-icon>Minha oficina</span><span class="breadcrumb-separator" aria-hidden="true">/</span><strong>{{title}}</strong></div>
+        <div class="topbar-actions">
+          <button mat-stroked-button class="theme-toggle workspace-theme-toggle" data-theme-toggle type="button" (click)="theme.toggle()" [attr.aria-label]="theme.actionLabel()" [attr.aria-pressed]="theme.mode()==='dark'" [matTooltip]="theme.actionLabel()"><mat-icon>{{theme.icon()}}</mat-icon><span>{{theme.mode()==='dark'?'Tema claro':'Tema escuro'}}</span></button>
+          <span class="topbar-divider" aria-hidden="true"></span>
+          <button class="account-trigger" mat-button [matMenuTriggerFor]="accountMenu" *ngIf="api.user()" aria-label="Menu da conta"><span class="topbar-user"><span class="avatar" aria-hidden="true">{{initials}}</span><span class="user-info"><strong>{{api.user().name}}</strong><small>{{roles[api.user().role]}}</small></span><mat-icon class="account-chevron">expand_more</mat-icon></span></button>
+          <mat-menu #accountMenu="matMenu"><a mat-menu-item routerLink="/catalogo"><mat-icon>public</mat-icon>Catálogo público</a><button mat-menu-item (click)="logout()"><mat-icon>logout</mat-icon>Sair da conta</button></mat-menu>
+        </div>
+      </header>
+      <mat-progress-bar mode="indeterminate" *ngIf="api.loading()" class="page-loading"></mat-progress-bar>
+      <main id="main-content" class="main-content" tabindex="-1"><router-outlet (activate)="onPageActivate()"></router-outlet></main>
+
+    </div>
+  </div>
+</ng-template>
+<ng-template #loading><div class="app-loading"><span class="loading-emblem"><mat-icon>garage</mat-icon></span><mat-spinner diameter="30"></mat-spinner><p>Carregando os dados da oficina…</p></div></ng-template>

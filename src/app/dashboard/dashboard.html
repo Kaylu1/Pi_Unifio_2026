@@ -1,0 +1,83 @@
+<header class="page-head dashboard-head">
+  <div>
+    <h1 class="page-title">{{personal ? 'Seus atendimentos' : 'Painel da oficina'}}</h1>
+    <p class="page-description">{{personal ? 'Veja as ordens dos seus veículos e os próximos agendamentos.' : 'Ordens em andamento, agenda do dia e peças para reposição.'}}</p>
+  </div>
+  <div class="dashboard-head-actions">
+    <span class="dashboard-date"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{today | date:"EEEE, d 'de' MMMM":'':'pt-BR'}}</span>
+    <button mat-flat-button *ngIf="canCreate" (click)="createOrder()"><mat-icon>add</mat-icon>Nova O.S.</button>
+    <a mat-flat-button *ngIf="!canCreate" routerLink="/ordens"><mat-icon>assignment</mat-icon>{{personal ? 'Ver minhas ordens' : 'Ordens de serviço'}}</a>
+  </div>
+</header>
+
+<section class="metrics-grid" aria-label="Resumo da oficina">
+  <article class="metric-card metric-active" data-motion="metric">
+    <div class="metric-top"><span class="metric-label">{{personal ? 'Seus atendimentos ativos' : 'Atendimentos em andamento'}}</span><span class="metric-icon"><mat-icon aria-hidden="true">garage</mat-icon></span></div>
+    <strong class="metric-value">{{active.length | number:'2.0-0'}}</strong>
+    <div class="metric-bottom"><span>Ordens ainda não encerradas</span><a routerLink="/ordens" aria-label="Ver atendimentos em andamento"><mat-icon>arrow_outward</mat-icon></a></div>
+  </article>
+  <article class="metric-card" data-motion="metric">
+    <div class="metric-top"><span class="metric-label">Permanência média</span><span class="metric-icon"><mat-icon aria-hidden="true">schedule</mat-icon></span></div>
+    <strong class="metric-value">{{closed.length ? averageHours : "—"}}<small *ngIf="closed.length">h</small></strong>
+    <div class="metric-bottom"><span>{{closed.length ? 'Da abertura ao encerramento' : 'Nenhuma O.S. encerrada'}}</span><mat-icon aria-hidden="true">timelapse</mat-icon></div>
+  </article>
+  <article class="metric-card" data-motion="metric">
+    <div class="metric-top"><span class="metric-label">Aprovação de orçamento</span><span class="metric-icon"><mat-icon aria-hidden="true">fact_check</mat-icon></span></div>
+    <strong class="metric-value">{{answeredItems.length ? approvals : "—"}}<small *ngIf="answeredItems.length">%</small></strong>
+    <div class="metric-bottom"><span>{{answeredItems.length ? (answeredItems.length + (answeredItems.length === 1 ? ' item respondido' : ' itens respondidos')) : 'Nenhum item respondido'}}</span><mat-icon aria-hidden="true">check</mat-icon></div>
+  </article>
+  <article class="metric-card" [class.metric-attention]="!personal && parts.length" data-motion="metric">
+    <div class="metric-top"><span class="metric-label">{{personal ? 'Atendimentos encerrados' : 'Peças para repor'}}</span><span class="metric-icon"><mat-icon aria-hidden="true">{{personal ? 'history' : 'inventory_2'}}</mat-icon></span></div>
+    <strong class="metric-value">{{(personal ? closed.length : parts.length) | number:'2.0-0'}}</strong>
+    <div class="metric-bottom"><span>{{personal ? 'Ordens no seu histórico' : 'No mínimo ou abaixo do estoque'}}</span><a [routerLink]="personal ? '/ordens' : '/estoque'" [attr.aria-label]="personal ? 'Ver histórico de ordens' : 'Conferir estoque'"><mat-icon>arrow_outward</mat-icon></a></div>
+  </article>
+</section>
+
+<div class="dashboard-workspace">
+  <section class="operations-panel" data-motion="panel" aria-labelledby="flow-heading">
+    <div class="operations-head">
+      <div><h2 id="flow-heading">Ordens por etapa</h2><p>Distribuição das ordens em andamento.</p></div>
+      <a routerLink="/ordens" class="hero-link" aria-label="Ver todas as ordens"><mat-icon>arrow_outward</mat-icon></a>
+    </div>
+    <div class="operations-summary"><span class="summary-dot"></span><strong>{{active.length}}</strong><span>{{personal ? 'atendimentos em andamento' : 'ordens em andamento'}}</span></div>
+    <div class="stage-rail" aria-label="Distribuição das ordens em aberto">
+      <a class="stage" *ngFor="let status of states; let i=index" [class.has-orders]="count(status)>0" [class.is-complete]="status==='concluida'" [routerLink]="['/ordens']" [queryParams]="{status:status}" [attr.aria-label]="statusLabel(status)+': '+count(status)+' ordens'">
+        <div class="stage-station"><span class="stage-icon"><mat-icon aria-hidden="true">{{stageIcons[status]}}</mat-icon></span><mat-icon class="stage-connector" aria-hidden="true" *ngIf="i<states.length-1">chevron_right</mat-icon></div>
+        <strong class="stage-count">{{count(status) | number:'2.0-0'}}</strong>
+        <span class="stage-name">{{statusLabel(status)}}</span>
+        <div class="stage-track"><span class="stage-bar" data-motion="bar" [style.width.%]="percent(status)"></span></div>
+      </a>
+    </div>
+    <div class="operations-foot">
+      <span><mat-icon aria-hidden="true">done_all</mat-icon>{{closed.length}} {{personal ? 'atendimentos no seu histórico' : 'ordens encerradas'}}</span>
+      <a routerLink="/ordens" [queryParams]="{status:'aguardando_aprovacao'}"><span>{{pending.length}} {{pending.length === 1 ? 'orçamento aguardando resposta' : 'orçamentos aguardando resposta'}}</span><mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+    </div>
+  </section>
+
+  <section class="schedule-panel surface" data-motion="panel" aria-labelledby="agenda-heading">
+    <div class="section-head"><div><h2 id="agenda-heading">{{personal ? 'Seus agendamentos de hoje' : 'Agenda de hoje'}}</h2><p>{{appointments.length}} {{appointments.length === 1 ? 'atendimento agendado' : 'atendimentos agendados'}}</p></div><a mat-icon-button routerLink="/agenda" aria-label="Abrir agenda" *ngIf="!personal"><mat-icon>arrow_outward</mat-icon></a></div>
+    <div class="agenda-list" *ngIf="appointments.length; else noAgenda">
+      <div class="agenda-entry" *ngFor="let ap of appointments.slice(0,3); let first=first" [class.next-appointment]="first" data-motion="row">
+        <div class="agenda-time">{{ap.time}}<span class="agenda-marker"></span></div>
+        <div class="agenda-details"><strong>{{api.vehicle(ap.vehicleId)?.model || 'Veículo'}}</strong><p>{{api.client(ap.clientId)?.name}} <span class="muted">· {{api.vehicle(ap.vehicleId)?.plate}}</span></p><span class="mechanic-line"><mat-icon aria-hidden="true">person_outline</mat-icon>{{api.person(ap.mechanicId)?.name || 'Mecânico a definir'}}</span></div>
+      </div>
+    </div>
+    <ng-template #noAgenda><div class="empty-state compact"><span class="agenda-empty-icon"><mat-icon aria-hidden="true">event_available</mat-icon></span><h3>Sem agendamentos hoje</h3><p>{{personal ? 'Seus próximos agendamentos aparecerão aqui.' : 'Consulte outros dias ou registre um novo atendimento.'}}</p></div></ng-template>
+    <a class="agenda-footer" routerLink="/agenda" *ngIf="!personal"><span>Conferir agenda completa</span><mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+    <p class="agenda-footer personal-note" *ngIf="personal"><mat-icon aria-hidden="true">info_outline</mat-icon>Precisa agendar? Entre em contato com a oficina.</p>
+  </section>
+</div>
+
+<section class="surface recent-panel" data-motion="panel" aria-labelledby="recent-heading">
+  <div class="section-head"><div><h2 id="recent-heading">{{personal ? 'Suas ordens recentes' : 'Ordens recentes'}}</h2><p>Últimas ordens ainda em andamento</p></div><a mat-button routerLink="/ordens">Todas as ordens <mat-icon>arrow_forward</mat-icon></a></div>
+  <div class="table-scroll"><table class="data-table recent-table"><thead><tr><th>Ordem</th><th>Veículo / cliente</th><th>Responsável</th><th>Etapa</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>
+    <tr *ngFor="let order of recent" data-motion="row">
+      <td><a [routerLink]="['/ordens',order.id]" class="order-number">#{{order.number || order.id}}</a><small class="muted">{{order.createdAt | date:'dd/MM, HH:mm'}}</small></td>
+      <td><div class="vehicle-cell"><span class="vehicle-icon"><mat-icon aria-hidden="true">directions_car</mat-icon></span><div><strong>{{api.vehicle(order.vehicleId)?.model || 'Veículo'}}</strong><small class="muted">{{api.vehicle(order.vehicleId)?.plate}} · {{api.client(order.clientId)?.name}}</small></div></div></td>
+      <td><span class="assignee"><span class="assignee-dot"></span>{{api.person(order.mechanicId)?.name || 'A definir'}}</span></td>
+      <td><span [class]="'status-pill '+order.status">{{statusLabel(order.status)}}</span></td>
+      <td class="order-action"><a mat-icon-button [routerLink]="['/ordens',order.id]" [attr.aria-label]="'Abrir ordem '+(order.number || order.id)"><mat-icon>arrow_forward</mat-icon></a></td>
+    </tr>
+    <tr *ngIf="!recent.length"><td colspan="5"><div class="empty-state compact"><mat-icon aria-hidden="true">task_alt</mat-icon><h3>Nenhuma ordem em andamento</h3><p>As próximas ordens abertas aparecerão aqui.</p></div></td></tr>
+  </tbody></table></div>
+</section>

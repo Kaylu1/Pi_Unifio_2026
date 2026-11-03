@@ -1,0 +1,60 @@
+OSCAR — SOLICITAÇÕES PÚBLICAS DE SERVIÇOS
+==========================================
+O fluxo local usa SQLite; o servidor cria a tabela service_requests
+automaticamente ao abrir a base local. Nenhum banco remoto foi alterado.
+
+SQL PARA APLICAR DEPOIS (PostgreSQL / Supabase)
+-----------------------------------------------
+Este bloco segue o esquema privado da migração já existente do OScar.
+Execute somente quando for preparar o PostgreSQL.
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS oscar_private.service_requests (
+  id BIGSERIAL PRIMARY KEY,
+  data JSONB NOT NULL CHECK (jsonb_typeof(data) = 'object')
+);
+CREATE TABLE IF NOT EXISTS oscar_private.service_request_tombstones (
+  requestid BIGINT PRIMARY KEY,
+  erasedat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  actorid BIGINT
+);
+CREATE INDEX IF NOT EXISTS idx_service_requests_status
+  ON oscar_private.service_requests ((data->>'status'));
+
+ALTER TABLE oscar_private.service_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE oscar_private.service_request_tombstones ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE oscar_private.service_requests FROM PUBLIC;
+REVOKE ALL ON TABLE oscar_private.service_request_tombstones FROM PUBLIC;
+REVOKE ALL ON SEQUENCE oscar_private.service_requests_id_seq FROM PUBLIC;
+
+DO $oscar_permissions$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON TABLE oscar_private.service_requests FROM anon;
+    REVOKE ALL ON TABLE oscar_private.service_request_tombstones FROM anon;
+    REVOKE ALL ON SEQUENCE oscar_private.service_requests_id_seq FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON TABLE oscar_private.service_requests FROM authenticated;
+    REVOKE ALL ON TABLE oscar_private.service_request_tombstones FROM authenticated;
+    REVOKE ALL ON SEQUENCE oscar_private.service_requests_id_seq FROM authenticated;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    GRANT ALL ON TABLE oscar_private.service_requests TO service_role;
+    GRANT ALL ON TABLE oscar_private.service_request_tombstones TO service_role;
+    GRANT USAGE, SELECT ON SEQUENCE oscar_private.service_requests_id_seq TO service_role;
+  END IF;
+END
+$oscar_permissions$;
+COMMIT;
+
+O adaptador server/postgres-store.mjs já reconhece service_requests.
+Execute este SQL somente no projeto Supabase dedicado do OScar, depois
+da migração principal e antes de iniciar a API em modo PostgreSQL.
+
+DADOS E COMPORTAMENTO
+---------------------
+Cada registro guarda nome, telefone, veículo, placa opcional, relato de
+sintomas, preferência opcional de data/período e um snapshot dos serviços,
+preços e duração. Trate esses dados como pessoais. A solicitação nasce com
+status "pendente" e NÃO cria agendamento confirmado.

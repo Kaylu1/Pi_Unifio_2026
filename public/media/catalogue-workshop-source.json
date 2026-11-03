@@ -1,0 +1,42 @@
+{
+    "source":  {
+                   "localFile":  "data/video-source/pexels-9498286-source.mp4",
+                   "providerHint":  "Pexels (inferred from the saved filename)",
+                   "itemIdHint":  "9498286",
+                   "licenseStatus":  "The project has no saved license evidence for this source. Verify before any public release.",
+                   "sha256":  "bd437765ea5d1e7e11a9002c7d97cd887680d7d1db4ea8d87409af8b4e139ed4",
+                   "sizeBytes":  14743395,
+                   "width":  1920,
+                   "height":  1080,
+                   "durationSeconds":  20.01
+               },
+    "edit":  {
+                 "realFootage":  true,
+                 "generatedWithAI":  false,
+                 "mainSourceSeconds":  [
+                                           5.6,
+                                           14.6
+                                       ],
+                 "loopTransition":  "0.6 second fade through black from source 14.0-14.6 to source 5.0-5.6; playback loops at source 5.6",
+                 "cropSourcePixels":  {
+                                          "x":  180,
+                                          "y":  120,
+                                          "width":  1440,
+                                          "height":  960
+                                      },
+                 "cropReason":  "Keeps moving vehicles and work bays in a 3:2 master suited to the desktop and mobile hero panels, and excludes the branded pillar in earlier source footage.",
+                 "output":  "960x640, 24 fps, H.264 High Level 3.1, yuv420p, faststart, no audio",
+                 "brightness":  -0.025,
+                 "saturation":  0.9,
+                 "contrast":  1.03,
+                 "posterFrameSeconds":  2.5
+             },
+    "files":  {
+                  "video":  "/media/catalogue-workshop-loop.mp4",
+                  "poster":  "/media/catalogue-workshop-poster.webp",
+                  "videoBytes":  2385210,
+                  "posterBytes":  100280,
+                  "videoSha256":  "2d2f311ed53e706a3b655c74fd4eaf6b03670ebfac931be83ca788ff1ecd7857",
+                  "posterSha256":  "2cc37acf4c1b4e036288cb1d1c1ebe05c8f6f52c15e7a514f9899a24c2a71e28"
+              }
+}

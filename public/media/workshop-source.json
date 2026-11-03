@@ -1,0 +1,46 @@
+{
+  "source": {
+    "provider": "Mixkit",
+    "itemId": 4716,
+    "title": "Mechanic repairing a car engine",
+    "creator": null,
+    "creatorNote": "No individual creator credit is shown on the public item page.",
+    "page": "https://mixkit.co/free-stock-video/mechanic-repairing-a-car-engine-4716/",
+    "download": "https://assets.mixkit.co/videos/4716/4716-720.mp4",
+    "license": "Mixkit Stock Video Free License",
+    "licenseUrl": "https://mixkit.co/license/modal/videoFree/",
+    "termsUrl": "https://mixkit.co/terms/",
+    "reviewedOn": "2026-10-21",
+    "sha256": "8f300ab6bd9bfebb29757afd641e3a0c1a567802c68acff2f83ef32abcda787d"
+  },
+  "edits": {
+    "realFootage": true,
+    "generatedWithAI": false,
+    "size": "1280x720",
+    "fps": 24,
+    "durationSeconds": 11,
+    "audio": false,
+    "sourceMainSegmentSeconds": [
+      0.5,
+      11.5
+    ],
+    "loopBlendSeconds": 0.5,
+    "loopBlendTargetSegmentSeconds": [
+      0,
+      0.5
+    ],
+    "brightness": -0.035,
+    "saturation": 0.82,
+    "contrast": 1.03,
+    "encoding": "H.264 High Level 3.1, yuv420p, MP4 faststart",
+    "poster": "First decoded frame of the prepared MP4, WebP quality 82"
+  },
+  "files": {
+    "video": "/media/workshop-loop.mp4",
+    "poster": "/media/workshop-poster.webp",
+    "videoBytes": 1742115,
+    "posterBytes": 42198,
+    "videoSha256": "5ab7a8d4f8806e0dc7a49fc86b6be8bcc6a7b08db5f6ffaf4d387f0db19f6546",
+    "posterSha256": "6f330e0c9eca712a5706ed7cacb1c937906aed4d4534327d4a93b3b1ec625fee"
+  }
+}

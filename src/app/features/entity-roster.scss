@@ -1,0 +1,45 @@
+.supplier-directory { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
+.supplier-card { padding: 28px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); min-width: 0; }
+.supplier-heading { display: flex; align-items: center; gap: 13px; }
+.supply-symbol { display: grid; place-items: center; background: var(--surface-alt); color: var(--text-muted); border-radius: 12px; width: 44px; height: 44px; flex-shrink: 0; }
+.supplier-heading h2 { font: 700 17px/1.45 Manrope,sans-serif; margin: 0 0 5px; }
+.supplier-heading .muted { font-size: 11px; }
+.supplier-delivery { display: flex; align-items: center; gap: 22px; padding-block: 27px; }
+.supplier-delivery strong { font: 700 42px/1.2 Manrope,sans-serif; color: var(--text); letter-spacing: -.03em; }
+.supplier-delivery small { font: 500 15px 'DM Sans',sans-serif; color: var(--text-muted); }
+.supplier-delivery p { color: var(--text-muted); font-size: 12px; line-height: 1.7; padding-left: 22px; border-left: 1px solid var(--border); margin: 0; }
+.supplier-contact { display: flex; gap: 9px; align-items: center; padding-bottom: 22px; font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere; }
+.supplier-contact mat-icon { font-size: 19px; width: 19px; height: 19px; }
+.supplier-catalogue { border-top: 1px solid var(--border); padding-top: 22px; }
+.supplier-catalogue h3 { font-size: 12px; margin: 0 0 13px; }
+.supplier-catalogue p,.supplier-catalogue>span { font-size: 12px; color: var(--text-muted); line-height: 1.75; }
+.supplier-catalogue>span { display: block; margin-bottom: 6px; }
+.supplier-actions { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-top: 25px; }
+.supplier-actions>* { min-height: 44px; font-size: 12px; }
+.team-directory { display: grid; gap: 15px; }
+.team-person { display: flex; align-items: center; gap: 24px; padding: 28px 30px; background: var(--surface); border-radius: 16px; }
+.team-avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: var(--accent-soft); color: var(--accent-strong); font: 600 21px Manrope,sans-serif; flex-shrink: 0; }
+.team-person-info { min-width: 0; }
+.team-person h2 { font: 700 19px/1.4 Manrope,sans-serif; margin: 10px 0 5px; }
+.team-person p { font-size: 13px; color: var(--text-muted); margin: 0; overflow-wrap: anywhere; }
+.team-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.team-actions button { min-height: 44px; }
+.ticket-board-scroll { overflow-x: auto; max-width: 100%; padding-bottom: 14px; }
+.ticket-board { display: grid; grid-template-columns: repeat(5,minmax(230px,1fr)); gap: 18px; }
+.ticket-column { background: var(--surface-alt); border-radius: 16px; padding: 15px; min-height: 300px; }
+.ticket-column>header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+.ticket-column>header>strong { color: var(--text-muted); font-size: 12px; }
+.ticket-card { padding: 19px; background: var(--surface); border-radius: 12px; margin-bottom: 14px; }
+.ticket-id { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; }
+.ticket-id span { color: var(--text-muted); }
+.ticket-card>p { font-size: 13px; line-height: 1.7; margin: 15px 0; }
+.coverage-label { display: flex; gap: 6px; align-items: center; color: var(--warning); font-size: 11px; }
+.coverage-label mat-icon { font-size: 17px; width: 17px; height: 17px; }
+.coverage-label.covered { color: var(--success); }
+.ticket-card .ticket-notes { border-top: 1px solid var(--border); padding-top: 15px; color: var(--text-muted); font-size: 12px; }
+.ticket-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
+.ticket-actions button { min-height: 44px; font-size: 12px; }
+.ticket-column-empty { color: var(--text-muted); font-size: 12px; line-height: 1.7; text-align: center; padding: 35px 8px; }
+@media(max-width:1100px) { .service-workbench { grid-template-columns: minmax(240px,.8fr) minmax(0,1.2fr); gap: 20px; } .service-detail { padding: 27px; } .supplier-directory { grid-template-columns: 1fr; } .team-person { flex-wrap: wrap; } .team-actions { margin-left: 88px; } }
+@media(max-width:650px) { .service-workbench { grid-template-columns: 1fr; } .service-detail { padding: 25px 22px; } .service-facts dd { font-size: 22px; } .supplier-card { padding: 23px; } .supplier-actions { flex-wrap: wrap; } .team-person { padding: 23px; gap: 17px; } .team-avatar { width: 50px; height: 50px; border-radius: 15px; font-size: 18px; } .team-actions { margin-left: 0; flex-wrap: wrap; width: 100%; } .team-person h2 { font-size: 17px; } .inspection-heading { flex-wrap: wrap; gap: 8px; } }
+@media(prefers-reduced-motion:reduce) { .service-choice { transition: none; } }

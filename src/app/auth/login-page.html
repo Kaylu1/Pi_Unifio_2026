@@ -1,0 +1,71 @@
+<section class="login-page" aria-label="Acesso ao OScar">
+  <div class="login-media" aria-hidden="true">
+    <img class="login-still" src="/media/workshop-poster.webp" width="1280" height="720" alt="" fetchpriority="high">
+    <video *ngIf="videoEnabled && !videoFailed" #backgroundVideo class="login-video" [class.is-ready]="videoReady"
+      [src]="videoSource" [autoplay]="videoAutoplay" [muted]="true" muted playsinline loop preload="auto" tabindex="-1" disablepictureinpicture
+      (canplay)="onVideoReady()" (playing)="onVideoStarted()" (timeupdate)="onVideoProgress()"
+      (waiting)="onVideoWaiting()" (error)="onVideoError()" (pause)="onVideoPause()"></video>
+    <div class="login-shade"></div>
+  </div>
+
+  <header class="login-header">
+    <a class="auth-brand" routerLink="/catalogo" aria-label="OScar — catálogo de serviços">
+      <span class="auth-brand-mark" aria-hidden="true"><mat-icon>garage</mat-icon></span>
+      <span>OScar<small>Gestão de oficinas</small></span>
+    </a>
+  </header>
+
+  <div class="login-content">
+    <section class="login-story" aria-labelledby="login-story-title">
+      <h1 id="login-story-title"><span>Da agenda</span><strong>à entrega.</strong></h1>
+      <p>Acompanhe ordens de serviço, peças e agendamentos com o histórico de cada veículo.</p>
+      <ul class="story-tools" aria-label="Gestão da oficina">
+        <li><mat-icon aria-hidden="true">build</mat-icon><span>Serviços</span></li>
+        <li><mat-icon aria-hidden="true">inventory_2</mat-icon><span>Peças e estoque</span></li>
+        <li><mat-icon aria-hidden="true">calendar_month</mat-icon><span>Agenda</span></li>
+      </ul>
+    </section>
+
+    <section class="login-panel" aria-labelledby="login-title">
+      <span class="access-symbol" aria-hidden="true"><mat-icon>garage_home</mat-icon></span>
+      <h2 id="login-title">Acessar o OScar</h2>
+      <p class="access-description">Entre com o e-mail e a senha da sua conta.</p>
+      <form class="login-form" (ngSubmit)="submit()" #form="ngForm" [attr.aria-busy]="busy">
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input matInput name="email" type="email" autocomplete="username" inputmode="email" [(ngModel)]="email" required email #emailInput="ngModel">
+          <mat-error>Informe um e-mail válido.</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Senha</mat-label>
+          <input matInput name="password" [type]="showPassword?'text':'password'" autocomplete="current-password" [(ngModel)]="password" required>
+          <button type="button" mat-icon-button matSuffix (click)="showPassword=!showPassword" [attr.aria-label]="showPassword?'Ocultar senha':'Mostrar senha'">
+            <mat-icon aria-hidden="true">{{showPassword?'visibility_off':'visibility'}}</mat-icon>
+          </button>
+          <mat-error>Informe sua senha.</mat-error>
+        </mat-form-field>
+        <a class="forgot-link" routerLink="/recuperar">Esqueci minha senha</a>
+        <p class="form-error" role="alert" *ngIf="error">{{error}}</p>
+        <button type="submit" mat-flat-button class="access-submit" [disabled]="busy||form.invalid">
+          {{busy?'Entrando…':'Entrar'}}<mat-icon aria-hidden="true">{{busy?'hourglass_top':'arrow_forward'}}</mat-icon>
+        </button>
+      </form>
+      <div class="login-catalogue">
+        <a routerLink="/catalogo"><span>Consultar serviços da oficina</span><mat-icon aria-hidden="true">north_east</mat-icon></a>
+      </div>
+    </section>
+  </div>
+
+  <footer class="login-footer">
+    <div class="film-caption"><span class="film-signal" [class.is-playing]="videoPlaying" aria-hidden="true"></span><p>Imagem ilustrativa de manutenção automotiva</p></div>
+    <div class="video-actions">
+      <span class="video-notice" role="status" *ngIf="videoBlocked">Use o botão para iniciar o vídeo.</span>
+      <span class="video-notice" role="status" *ngIf="videoFailed">Vídeo indisponível. Você pode tentar novamente.</span>
+      <button type="button" class="video-control" (click)="toggleVideo()" [class.is-playing]="videoPlaying"
+        [attr.aria-label]="videoCanPause?'Pausar vídeo de fundo':'Reproduzir vídeo de fundo'" [attr.aria-pressed]="videoPlaying">
+        <mat-icon aria-hidden="true">{{videoCanPause?'pause':'play_arrow'}}</mat-icon>
+        <span>{{videoControlText}}</span>
+      </button>
+    </div>
+  </footer>
+</section>

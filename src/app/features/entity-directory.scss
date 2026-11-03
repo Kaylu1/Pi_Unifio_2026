@@ -1,0 +1,62 @@
+.entity-toolbar { padding: 0; background: transparent; border: 0; gap: 16px; margin-bottom: 10px; }
+.entity-toolbar .search-field { max-width: 420px; }
+.result-count { margin: 0 0 20px auto; color: var(--text-muted); font-size: 12px; }
+.client-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; align-items: start; }
+.client-directory { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.contact-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 23px; min-width: 0; transition: border-color 180ms; }
+.contact-card.selected { border-color: var(--accent); }
+.contact-heading { display: flex; align-items: center; gap: 12px; }
+.person-avatar,.owner-avatar { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; font-size: 13px; }
+.contact-heading>div { min-width: 0; }
+.contact-heading h2 { font: 700 15px/1.45 Manrope,sans-serif; margin: 0 0 4px; overflow-wrap: anywhere; }
+.person-meta { font-size: 11px; color: var(--text-muted); }
+.contact-lines { display: grid; gap: 15px; margin: 26px 0; font-size: 12px; }
+.contact-lines>div { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.contact-lines dt { display: flex; color: var(--text-faint); }
+.contact-lines dd { margin: 0; color: var(--text-muted); overflow-wrap: anywhere; }
+.contact-lines mat-icon { font-size: 18px; height: 18px; width: 18px; }
+.contact-actions { display: flex; align-items: center; gap: 3px; border-top: 1px solid var(--border); padding-top: 13px; margin-top: 10px; }
+.contact-actions button { min-height: 44px; font-size: 12px; }
+.contact-actions button:last-child { margin-left: auto; }
+.client-context { position: sticky; top: 24px; background: var(--hero-bg); color: var(--hero-text); border-radius: 16px; padding: 26px; }
+.context-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; color: var(--hero-muted); }
+.context-heading h2 { font-size: 12px; font-weight: 500; margin: 0; }
+.context-heading mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--accent-glow); }
+.context-client-name { font: 700 23px/1.35 Manrope,sans-serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.client-context>.muted { font-size: 12px; line-height: 1.8; color: var(--hero-muted); margin: 13px 0 25px; }
+.context-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-block: 1px solid #ffffff25; padding: 20px 0; margin: 0 0 26px; }
+.context-counts dt { font-size: 11px; color: var(--hero-muted); }
+.context-counts dd { font: 600 27px Manrope,sans-serif; margin: 8px 0 0; }
+.client-context h3 { font-size: 13px; margin: 0 0 20px; font-weight: 500; }
+.linked-vehicle { display: flex; gap: 11px; align-items: center; margin-bottom: 21px; }
+.linked-vehicle>mat-icon { color: var(--accent-glow); }
+.linked-vehicle strong { display: block; font-size: 12px; font-weight: 500; }
+.linked-vehicle span { display: block; font-size: 11px; color: var(--hero-muted); margin-top: 4px; }
+.context-empty { color: var(--hero-muted); line-height: 1.75; font-size: 12px; }
+.client-context>a { width: 100%; min-height: 44px; color: var(--accent-glow); border-color: #ffffff55; margin-top: 8px; }
+.fleet-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.vehicle-card { background: var(--surface); padding: 26px; border-radius: 16px; min-width: 0; box-shadow: var(--shadow-card); }
+.vehicle-card-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 27px; }
+.vehicle-symbol { background: var(--surface-alt); color: var(--text-muted); display: grid; place-items: center; width: 45px; height: 45px; border-radius: 13px; }
+.vehicle-symbol mat-icon { font-size: 26px; width: 26px; height: 26px; }
+.vehicle-plate { border: 1px solid var(--border-strong); border-radius: 6px; padding: 7px 11px; color: var(--text); font-size: 13px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.vehicle-brand { margin: 0 0 5px; color: var(--text-muted); font-size: 12px; }
+.vehicle-card h2 { font: 700 26px/1.3 Manrope,sans-serif; letter-spacing: -.03em; margin: 0 0 26px; }
+.vehicle-specs { display: grid; grid-template-columns: 1fr 1.5fr; margin: 0; padding: 20px 0; border-block: 1px solid var(--border); gap: 16px; }
+.vehicle-specs dt { font-size: 11px; color: var(--text-muted); margin-bottom: 7px; }
+.vehicle-specs dd { margin: 0; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.vehicle-specs small { font-size: 11px; color: var(--text-muted); }
+.vehicle-owner { display: flex; align-items: center; gap: 11px; padding-block: 24px; }
+.owner-avatar { width: 34px; height: 34px; font-size: 11px; background: var(--surface-alt); color: var(--text-muted); }
+.vehicle-owner small { color: var(--text-muted); font-size: 10px; }
+.vehicle-owner strong { display: block; font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+.vehicle-actions { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.vehicle-actions button { min-height: 44px; font-size: 12px; }
+.history-count { margin-left: 8px; color: var(--text-muted); }
+.entity-pagination { margin-top: 22px; border-radius: 12px; background: transparent; }
+.entity-empty { border: 1px dashed var(--border-strong); border-radius: 16px; margin-top: 24px; }
+@media (max-width:1400px) { .client-layout { grid-template-columns: minmax(0,1fr) 270px; gap: 20px; } .client-directory { grid-template-columns: 1fr; } .fleet-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width:1000px) { .client-layout { grid-template-columns: 1fr; } .client-directory { grid-template-columns: repeat(2,minmax(0,1fr)); } .client-context { position: static; } }
+@media (max-width:620px) { .client-directory,.fleet-grid { grid-template-columns: 1fr; gap: 16px; } .contact-card,.vehicle-card { padding: 22px; } .entity-toolbar { gap: 0; } .result-count { margin: 0 0 20px; } .entity-toolbar .search-field { max-width: none; } .client-context { padding: 24px; } }
+@media(prefers-reduced-motion:reduce) { .contact-card { transition: none; } }
+.client-context{scroll-margin-top:20px}.context-heading h2:focus-visible{outline:3px solid var(--accent-glow);outline-offset:5px}.contact-actions .mat-mdc-icon-button mat-icon{font-size:20px;width:20px;height:20px}

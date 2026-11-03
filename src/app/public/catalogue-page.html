@@ -1,0 +1,163 @@
+<div class="catalogue-site">
+  <header class="catalogue-header">
+    <a routerLink="/catalogo" class="catalogue-brand" aria-label="OScar — catálogo de serviços">
+      <span class="catalogue-brand-mark" aria-hidden="true"><mat-icon>garage</mat-icon></span>
+      <span>OScar<small>Gestão de oficinas</small></span>
+    </a>
+    <nav class="catalogue-nav" aria-label="Navegação do catálogo">
+      <a routerLink="/catalogo" fragment="servicos">Serviços</a>
+      <a routerLink="/catalogo" fragment="solicitar-atendimento">Solicitar atendimento</a>
+    </nav>
+    <div class="catalogue-header-actions">
+      <a mat-stroked-button routerLink="/entrar" class="catalogue-login"><mat-icon>login</mat-icon>Entrar</a>
+      <span class="catalogue-theme-space" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <main class="catalogue-content">
+    <section class="catalogue-hero" aria-labelledby="catalogue-title">
+      <div class="catalogue-hero-copy">
+        <h1 id="catalogue-title">Serviços <span>da oficina</span></h1>
+        <p>Consulte os serviços cadastrados, seus valores e a duração estimada antes de falar com a oficina.</p>
+        <div class="catalogue-hero-actions">
+          <a mat-flat-button routerLink="/catalogo" fragment="servicos">Explorar serviços<mat-icon iconPositionEnd>south</mat-icon></a>
+          <a routerLink="/catalogo" fragment="solicitar-atendimento" class="hero-scheduling">Montar solicitação<mat-icon aria-hidden="true">arrow_outward</mat-icon></a>
+        </div>
+        <div class="catalogue-hero-note"><mat-icon aria-hidden="true">forum</mat-icon><span>Escolha os serviços. A equipe entra em contato para confirmar o atendimento.</span></div>
+      </div>
+      <figure class="catalogue-hero-media">
+        <img class="catalogue-hero-poster" src="/media/catalogue-workshop-poster.webp" alt="Vista de uma oficina com veículos em manutenção" width="960" height="640" fetchpriority="high">
+        <video *ngIf="videoEnabled && !videoFailed" #heroVideo class="catalogue-hero-video" [class.is-ready]="videoReady"
+          src="/media/catalogue-workshop-loop.mp4" [autoplay]="videoAutoplay" muted playsinline loop preload="metadata" tabindex="-1" aria-hidden="true" disablepictureinpicture
+          (canplay)="onVideoCanPlay()" (playing)="onVideoPlaying()" (pause)="onVideoPause()" (error)="onVideoError()"></video>
+        <span class="media-corner" aria-hidden="true"></span>
+        <figcaption><span class="media-caption-line" aria-hidden="true"></span>Vídeo ilustrativo de oficina automotiva</figcaption>
+        <button type="button" class="catalogue-video-control" (click)="toggleVideo()" [attr.aria-label]="videoControlText" [attr.aria-pressed]="videoPlaying">
+          <mat-icon aria-hidden="true">{{videoPlaying?'pause':'play_arrow'}}</mat-icon><span>{{videoControlText}}</span>
+        </button>
+      </figure>
+    </section>
+
+    <section id="servicos" class="catalogue-browser" aria-labelledby="services-heading">
+      <div class="catalogue-section-heading">
+        <div><h2 id="services-heading">Serviços disponíveis</h2><p>Confira descrição, valor e tempo estimado.</p></div>
+        <span class="catalogue-availability" *ngIf="loaded&&!error"><span aria-hidden="true"></span>{{services.length}} {{services.length===1?'serviço disponível':'serviços disponíveis'}}</span>
+      </div>
+
+      <div class="catalogue-tools">
+        <mat-form-field appearance="outline" class="catalogue-search" subscriptSizing="dynamic">
+          <mat-label>Buscar serviço</mat-label>
+          <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+          <input matInput [(ngModel)]="query" (ngModelChange)="page=0" autocomplete="off" placeholder="Nome ou descrição do serviço">
+          <button mat-icon-button matSuffix type="button" *ngIf="query" (click)="query='';page=0" aria-label="Limpar busca"><mat-icon>close</mat-icon></button>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="catalogue-sort" subscriptSizing="dynamic">
+          <mat-label>Ordenar por</mat-label>
+          <mat-select [(ngModel)]="order" (ngModelChange)="page=0">
+            <mat-option value="default">Ordem do catálogo</mat-option>
+            <mat-option value="price">Menor valor</mat-option>
+            <mat-option value="duration">Menor duração</mat-option>
+            <mat-option value="name">Nome do serviço</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="catalogue-duration-filters" role="group" aria-label="Filtrar por duração estimada">
+        <button *ngFor="let filter of durationFilters" type="button" [class.is-selected]="duration===filter.value" [attr.aria-pressed]="duration===filter.value" (click)="setDuration(filter.value)">{{filter.label}}<span *ngIf="loaded&&!error">{{durationCount(filter.value)}}</span></button>
+      </div>
+
+      <div class="catalogue-selection-bar" *ngIf="selectedIds.length" role="status" aria-live="polite">
+        <span><strong>{{selectedIds.length}}</strong> {{selectedIds.length===1?'serviço escolhido':'serviços escolhidos'}}</span>
+        <strong>{{selectedTotal|currency:'BRL'}}</strong>
+        <a routerLink="/catalogo" fragment="solicitar-atendimento">Continuar solicitação<mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+      </div>
+
+      <div class="catalogue-layout">
+        <div class="catalogue-results" [attr.aria-busy]="!loaded">
+          <div class="catalogue-loading" role="status" *ngIf="!loaded"><mat-spinner diameter="30"></mat-spinner><p>Carregando os serviços da oficina…</p></div>
+          <div class="catalogue-error" role="alert" *ngIf="error"><mat-icon aria-hidden="true">cloud_off</mat-icon><h3>Não foi possível carregar os serviços</h3><p>{{error}}</p><button mat-stroked-button type="button" (click)="loadServices()">Tentar novamente</button></div>
+          <p class="catalogue-result-summary" role="status" aria-live="polite" *ngIf="loaded&&!error">{{rows.length}} {{rows.length===1?'serviço encontrado':'serviços encontrados'}}<span *ngIf="query"> para “{{query}}”</span></p>
+
+          <div class="catalogue-service-list" *ngIf="loaded&&!error">
+            <article class="catalogue-service service-card" *ngFor="let service of visible;trackBy:trackService" [class.is-open]="expandedId===service.id">
+              <div class="service-row">
+                <span class="service-pictogram" aria-hidden="true"><mat-icon>{{serviceIcon(service)}}</mat-icon></span>
+                <div class="service-copy">
+                  <h3 [id]="'service-title-'+service.id"><button class="service-open" type="button" (click)="toggleService(service)" [attr.aria-expanded]="expandedId===service.id" [attr.aria-controls]="'service-detail-'+service.id">{{service.name||service.description}}</button></h3>
+                  <p *ngIf="expandedId!==service.id">{{service.description}}</p>
+                  <span class="service-open-label" *ngIf="expandedId===service.id">Detalhes do serviço</span>
+                </div>
+                <div class="service-facts"><strong>{{service.price|currency:'BRL'}}</strong><span><mat-icon aria-hidden="true">schedule</mat-icon>{{service.durationMinutes}} min estimados</span></div>
+                <button class="service-add" type="button" [class.is-selected]="isSelected(service)" [attr.aria-label]="(isSelected(service)?'Remover ':'Adicionar ')+(service.name||service.description)" [attr.aria-pressed]="isSelected(service)" (click)="toggleSelection(service)"><mat-icon aria-hidden="true">{{isSelected(service)?'check':'add'}}</mat-icon>{{isSelected(service)?'Adicionado':'Adicionar'}}</button>
+                <span class="service-expand" aria-hidden="true"><mat-icon>{{expandedId===service.id?'keyboard_arrow_up':'keyboard_arrow_down'}}</mat-icon></span>
+              </div>
+              <div class="service-detail" [id]="'service-detail-'+service.id" [hidden]="expandedId!==service.id" role="region" [attr.aria-labelledby]="'service-title-'+service.id">
+                <p>{{service.description}}</p>
+                <div class="service-detail-bottom"><span><mat-icon aria-hidden="true">info</mat-icon>A equipe confirma a disponibilidade e o horário do atendimento.</span><a routerLink="/catalogo" fragment="solicitar-atendimento" (click)="addService(service)">Incluir no pedido<mat-icon aria-hidden="true">arrow_forward</mat-icon></a></div>
+              </div>
+            </article>
+          </div>
+          <div class="catalogue-empty" *ngIf="loaded&&!error&&!rows.length"><mat-icon aria-hidden="true">search_off</mat-icon><h3>Nenhum serviço encontrado</h3><p>{{services.length?'Tente outro termo ou ajuste o filtro de duração.':'Os serviços disponíveis aparecerão aqui quando forem publicados pela oficina.'}}</p><button mat-stroked-button type="button" *ngIf="services.length" (click)="clearFilters()">Limpar filtros</button></div>
+          <mat-paginator *ngIf="loaded&&!error&&rows.length" [length]="rows.length" [pageSize]="size" [pageIndex]="page" [pageSizeOptions]="[6,12,24]" (page)="page=$event.pageIndex;size=$event.pageSize" aria-label="Paginação dos serviços"></mat-paginator>
+        </div>
+
+        <aside class="catalogue-appointment" aria-labelledby="appointment-heading">
+          <div class="appointment-intro"><mat-icon aria-hidden="true">event_available</mat-icon><h2 id="appointment-heading">Seu atendimento começa aqui.</h2><p>Escolha um ou mais serviços, conte sobre o veículo e envie seu pedido à oficina.</p></div>
+          <ol class="appointment-steps">
+            <li><div><h3>Monte seu pedido</h3><p>Adicione serviços para ver o total estimado.</p></div></li>
+            <li><div><h3>Descreva o veículo</h3><p>Se precisar de diagnóstico, conte o que está acontecendo.</p></div></li>
+            <li><div><h3>Aguarde a confirmação</h3><p>A equipe entra em contato para combinar o dia e o horário.</p></div></li>
+          </ol>
+          <a class="appointment-cta" routerLink="/catalogo" fragment="solicitar-atendimento">Solicitar atendimento<mat-icon aria-hidden="true">arrow_forward</mat-icon></a>
+          <div class="appointment-time-note"><mat-icon aria-hidden="true">schedule</mat-icon><p>Valores e tempos são estimativas. O envio não confirma um horário.</p></div>
+        </aside>
+      </div>
+    </section>
+    <section id="solicitar-atendimento" class="catalogue-request" aria-labelledby="request-heading">
+      <div class="request-heading">
+        <div><h2 id="request-heading">Solicite seu atendimento</h2><p>Envie seu pedido agora. A oficina entra em contato para confirmar a disponibilidade e o horário.</p></div>
+        <span><mat-icon aria-hidden="true">lock</mat-icon>Seus dados ficam na oficina</span>
+      </div>
+
+      <div class="request-success" *ngIf="submittedRequestId!==null" role="status" aria-live="polite">
+        <mat-icon aria-hidden="true">task_alt</mat-icon>
+        <div><h3>Solicitação enviada.</h3><p>Recebemos seu pedido <strong>#{{submittedRequestId}}</strong>. A equipe vai falar com você pelo telefone informado antes de confirmar qualquer horário.</p><button type="button" (click)="resetRequest()">Fazer outra solicitação<mat-icon aria-hidden="true">arrow_forward</mat-icon></button></div>
+      </div>
+
+      <div class="request-grid" *ngIf="submittedRequestId===null">
+        <div class="request-summary">
+          <h3>Seu pedido</h3>
+          <p class="request-summary-lead">Você pode combinar vários serviços na mesma solicitação.</p>
+          <div class="request-empty" *ngIf="!selectedServices.length"><mat-icon aria-hidden="true">playlist_add</mat-icon><p>Nenhum serviço escolhido. Use os botões <strong>Adicionar</strong> no catálogo acima.</p><a routerLink="/catalogo" fragment="servicos">Ver serviços<mat-icon aria-hidden="true">north</mat-icon></a></div>
+          <ul class="request-items" *ngIf="selectedServices.length">
+            <li *ngFor="let service of selectedServices;trackBy:trackService"><span>{{service.name}}</span><strong>{{service.price|currency:'BRL'}}</strong><button type="button" (click)="toggleSelection(service)" [attr.aria-label]="'Remover '+service.name"><mat-icon>close</mat-icon></button></li>
+          </ul>
+          <div class="request-total" *ngIf="selectedServices.length"><span>Valor estimado dos serviços</span><strong>{{selectedTotal|currency:'BRL'}}</strong><small>{{selectedDuration}} min estimados no total</small></div>
+          <button *ngIf="diagnosticService as diagnosis" type="button" class="request-diagnostic" [class.is-selected]="isSelected(diagnosis)" [attr.aria-pressed]="isSelected(diagnosis)" (click)="toggleSelection(diagnosis)">
+            <mat-icon aria-hidden="true">{{isSelected(diagnosis)?'check_circle':'fact_check'}}</mat-icon>
+            <span><strong>{{isSelected(diagnosis)?'Avaliação técnica incluída':'Precisa de avaliação técnica?'}}</strong><small>Descreva o problema do veículo. {{diagnosis.price|currency:'BRL'}} pelo serviço.</small></span>
+            <mat-icon aria-hidden="true">{{isSelected(diagnosis)?'remove':'add'}}</mat-icon>
+          </button>
+          <p class="request-summary-note">O total é calculado pelos serviços cadastrados. Peças ou reparos adicionais serão avaliados pela equipe.</p>
+        </div>
+
+        <form class="request-form" (ngSubmit)="submitRequest()" (input)="requestError=''" (change)="requestError=''" novalidate>
+          <h3>Seus dados e veículo</h3>
+          <p>Precisamos dessas informações para responder ao seu pedido.</p>
+          <div class="request-fields">
+            <label>Seu nome <span>Obrigatório</span><input type="text" name="requestName" [(ngModel)]="requestName" autocomplete="name" maxlength="100" placeholder="Como podemos chamar você?"></label>
+            <label>Telefone para contato <span>Obrigatório</span><input type="tel" name="requestPhone" [(ngModel)]="requestPhone" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="(14) 99999-9999"></label>
+            <label>Veículo <span>Obrigatório</span><input type="text" name="requestVehicle" [(ngModel)]="requestVehicle" maxlength="120" placeholder="Marca, modelo e ano"></label>
+            <label>Placa <span>Opcional</span><input type="text" name="requestPlate" [(ngModel)]="requestPlate" maxlength="8" autocapitalize="characters" placeholder="ABC1D23"></label>
+            <label>Data de preferência <span>Opcional</span><input type="date" name="preferredDate" [(ngModel)]="preferredDate" [min]="minDate"></label>
+            <label>Período de preferência <span>Opcional</span><select name="preferredPeriod" [(ngModel)]="preferredPeriod"><option value="">Sem preferência</option><option value="manha">Manhã</option><option value="tarde">Tarde</option></select></label>
+            <label class="request-field-wide">O que está acontecendo com o veículo? <span>{{hasDiagnostic?'Obrigatório para avaliação':'Opcional'}}</span><textarea name="requestSymptoms" [(ngModel)]="requestSymptoms" maxlength="1000" rows="5" placeholder="Descreva os sintomas, quando começaram e o que você percebeu."></textarea><small *ngIf="hasDiagnostic">Para avaliação técnica, escreva pelo menos 10 caracteres.</small></label>
+          </div>
+          <p class="request-error" role="alert" *ngIf="requestError"><mat-icon aria-hidden="true">error_outline</mat-icon>{{requestError}}</p>
+          <div class="request-form-footer"><p>Ao enviar, você pede o contato da oficina. O horário só fica confirmado depois da resposta da equipe.</p><button type="submit" [disabled]="requestBusy"><mat-icon aria-hidden="true">{{requestBusy?'hourglass_top':'send'}}</mat-icon>{{requestBusy?'Enviando...':'Enviar solicitação'}}</button></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="catalogue-footer"><a routerLink="/catalogo" class="catalogue-footer-brand">OScar<span>Gestão de oficinas</span></a><p>Horários confirmados pela equipe da oficina.</p><a routerLink="/catalogo" fragment="catalogue-title">Voltar ao início<mat-icon aria-hidden="true">north</mat-icon></a></footer>
+</div>

@@ -1,0 +1,83 @@
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Relatórios</h1>
+    <p class="page-description">Serviços apontados e consumo líquido de peças por período.</p>
+  </div>
+</header>
+
+<section class="surface report-surface" [attr.aria-busy]="busy">
+  <form class="filter-bar" (ngSubmit)="generate()">
+    <mat-form-field appearance="outline">
+      <mat-label>Data inicial</mat-label>
+      <input matInput type="date" name="from" [(ngModel)]="from" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Data final</mat-label>
+      <input matInput type="date" name="to" [(ngModel)]="to" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Mecânico da O.S.</mat-label>
+      <mat-select name="mechanic" [(ngModel)]="mechanicId">
+        <mat-option value="">Toda a equipe</mat-option>
+        <mat-option *ngFor="let mechanic of mechanics" [value]="mechanic.id">{{mechanic.name}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="busy">{{busy ? 'Consultando…' : 'Atualizar relatório'}}</button>
+  </form>
+
+  <div class="report-loading" role="status" *ngIf="busy">
+    <mat-spinner diameter="28" aria-hidden="true"></mat-spinner>
+    <span>Consultando serviços e movimentações de peças…</span>
+  </div>
+  <p class="form-error report-error" role="alert" *ngIf="error">{{error}}</p>
+
+  <ng-container *ngIf="report && !busy">
+    <p class="report-period">Resultados de {{date(report.from)}} a {{date(report.to)}}</p>
+    <div class="stock-overview">
+      <div><span>Serviços executados</span><strong>{{report.totals?.services || 0}}</strong></div>
+      <div><span>Valor dos serviços</span><strong>{{cash(report.totals?.serviceRevenue)}}</strong></div>
+      <div><span>Custo das peças consumidas</span><strong>{{cash(report.totals?.partCost)}}</strong></div>
+    </div>
+    <mat-tab-group>
+      <mat-tab label="Serviços">
+        <div class="section-toolbar">
+          <h2>Serviços por O.S.</h2>
+          <button mat-stroked-button (click)="export('services')" [disabled]="!report.services?.length">Exportar CSV</button>
+        </div>
+        <p class="report-scroll-hint" *ngIf="report.services?.length">Deslize a tabela para ver as demais colunas.</p>
+        <div class="table-scroll" *ngIf="report.services?.length">
+          <table class="data-table">
+            <thead><tr><th>O.S.</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Executado por</th><th>Data</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of services">
+                <td>{{row.number || row.orderId}}</td><td>{{row.clientName}}</td><td>{{row.vehiclePlate}}</td>
+                <td>{{row.description}}</td><td>{{row.mechanicName}}</td><td>{{date(row.executedAt)}}</td><td>{{cash(row.total)}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="report-empty" *ngIf="!report.services?.length">Nenhum serviço apontado. Ajuste o período ou o mecânico.</p>
+        <mat-paginator *ngIf="report.services?.length" [length]="report.services.length" [pageSize]="pageSize" [pageIndex]="servicePage" (page)="servicePage=$event.pageIndex" aria-label="Paginação de serviços"></mat-paginator>
+      </mat-tab>
+      <mat-tab label="Peças">
+        <div class="section-toolbar">
+          <h2>Peças consumidas</h2>
+          <button mat-stroked-button (click)="export('parts')" [disabled]="!report.parts?.length">Exportar CSV</button>
+        </div>
+        <p class="report-scroll-hint" *ngIf="report.parts?.length">Deslize a tabela para ver as demais colunas.</p>
+        <div class="table-scroll" *ngIf="report.parts?.length">
+          <table class="data-table">
+            <thead><tr><th>Código</th><th>Peça</th><th>Quantidade líquida</th><th>Custo unitário</th><th>Custo total</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of parts">
+                <td>{{row.code}}</td><td>{{row.description}}</td><td>{{row.quantity}}</td><td>{{cash(row.cost)}}</td><td>{{cash(row.total)}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="report-empty" *ngIf="!report.parts?.length">Sem consumo líquido de peças. Ajuste o período ou o mecânico.</p>
+        <mat-paginator *ngIf="report.parts?.length" [length]="report.parts.length" [pageSize]="pageSize" [pageIndex]="partPage" (page)="partPage=$event.pageIndex" aria-label="Paginação do consumo"></mat-paginator>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</section>
