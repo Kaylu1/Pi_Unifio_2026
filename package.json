@@ -6,7 +6,7 @@
         "start": "node scripts/dev.mjs",
         "start:oscar-supabase": "node scripts/oscar-supabase.mjs start",
         "setup:oscar-supabase": "node scripts/oscar-supabase.mjs setup",
-        "build": "ng build",
+        "build": "ng build && node scripts/verify-csp-build.mjs",
         "watch": "ng build --watch --configuration development",
         "test": "node --test server/*.test.mjs tests/api*.mjs tests/postgres*.mjs tests/report-sql.test.mjs tests/cloud-flow.integration.mjs tests/admin-sql.test.mjs tests/oscar-supabase-setup.test.mjs tests/vercel-entry.test.mjs",
         "api": "node server/server.mjs",
