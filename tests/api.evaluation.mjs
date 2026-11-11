@@ -46,7 +46,7 @@ test('Avaliação: finalidade configurável preserva valor do cadastro e atualiz
     assert.equal(order.items[0].price, 237.45);
     assert.equal(order.items[0].servicePurpose, 'avaliacao');
     assert.deepEqual(order.evaluationServiceIds, [evaluation.id]);
-    assert.equal((await request(a, '/services/' + evaluation.id, { method: 'PUT', session: manager, body: { purpose: 'gratis' } })).status, 422);
+    assert.equal((await request(a, '/services/' + evaluation.id, { method: 'PUT', session: manager, body: { purpose: 'gratis' } })).status, 400);
     const zero = await ok(a, '/services/' + evaluation.id, { method: 'PUT', session: manager, body: { price: 0 } });
     assert.equal(zero.price, 0);
     assert.equal(zero.purpose, 'avaliacao');
@@ -121,9 +121,9 @@ test('Avaliação: valida modo, finalidade, serviço ativo e autorização inici
         { ...orderInput, serviceIds: [] },
         { ...orderInput, approvalMethod: undefined },
         { ...orderInput, assessmentNotes: 'x'.repeat(1001) }
-    ]) assert.equal((await request(a, '/orders', { method: 'POST', session, body })).status, 422);
+    ]) assert.equal((await request(a, '/orders', { method: 'POST', session, body })).status, 400);
     await ok(a, '/services/5', { method: 'PUT', session, body: { active: false } });
-    assert.equal((await request(a, '/orders', { method: 'POST', session, body: orderInput })).status, 422);
+    assert.equal((await request(a, '/orders', { method: 'POST', session, body: orderInput })).status, 400);
 });
 
 test('SQLite: migração de finalidade é idempotente e preserva preços e serviços personalizados', t => {

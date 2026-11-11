@@ -1,0 +1,53 @@
+{
+  "executedAt": "2026-11-11T11:56:11.057Z",
+  "runtime": "Newman (Postman Collection SDK)",
+  "passed": true,
+  "stats": {
+    "iterations": {
+      "total": 1,
+      "pending": 0,
+      "failed": 0
+    },
+    "items": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "scripts": {
+      "total": 174,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequests": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "requests": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "tests": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "assertions": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "testScripts": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequestScripts": {
+      "total": 87,
+      "pending": 0,
+      "failed": 0
+    }
+  },
+  "failures": []
+}

@@ -14,7 +14,7 @@ const dir=path.join(root,'data','test-runs',runId);await fs.mkdir(dir,{recursive
 const frontendPort=Number(process.env.OSCAR_TEST_FRONTEND_PORT||4212),apiPort=Number(process.env.OSCAR_TEST_API_PORT||4312);
 const base='https://localhost:'+frontendPort;
 const log=createWriteStream(path.join(dir,'servers.log'));
-const dev=spawn(process.execPath,['scripts/dev.mjs'],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,OSCAR_FRONTEND_PORT:String(frontendPort),OSCAR_API_PORT:String(apiPort),OSCAR_DB:path.join(dir,'fixture.sqlite')}});
+const dev=spawn(process.execPath,['scripts/dev.mjs','--sqlite'],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,OSCAR_FRONTEND_PORT:String(frontendPort),OSCAR_API_PORT:String(apiPort),OSCAR_DB:path.join(dir,'fixture.sqlite')}});
 dev.stdout.pipe(log,{end:false});dev.stderr.pipe(log,{end:false});
 let exited=false;dev.on('exit',()=>{exited=true;});
 function health(){return new Promise(resolve=>{const req=https.get(base+'/api/health',{rejectUnauthorized:false,timeout:1500},res=>{res.resume();resolve(res.statusCode===200);});req.on('error',()=>resolve(false));req.on('timeout',()=>req.destroy());});}
