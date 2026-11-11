@@ -1,0 +1,619 @@
+{
+  "capturedAt": "2026-11-11T11:55:54.651Z",
+  "fixtureName": "oscar_test",
+  "database": "mysql",
+  "baseUrl": "http://127.0.0.1:4302/api",
+  "passed": true,
+  "requests": 87,
+  "checks": [
+    {
+      "name": "Servidor e banco local",
+      "method": "GET",
+      "endpoint": "/health",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Sem credenciais retorna 401",
+      "method": "GET",
+      "endpoint": "/clients",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "name": "Senha de teste incorreta retorna 401",
+      "method": "GET",
+      "endpoint": "/clients",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "name": "Mecânico não cadastra serviços — 403",
+      "method": "POST",
+      "endpoint": "/services",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Gerente autenticado consulta os cadastros",
+      "method": "GET",
+      "endpoint": "/bootstrap",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastro inválido retorna 400",
+      "method": "POST",
+      "endpoint": "/services",
+      "expected": 400,
+      "actual": 400
+    },
+    {
+      "name": "Registro inexistente retorna 404",
+      "method": "GET",
+      "endpoint": "/clients/999999999",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "name": "Cadastrar cliente",
+      "method": "POST",
+      "endpoint": "/clients",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar clientes",
+      "method": "GET",
+      "endpoint": "/clients",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar cliente por ID",
+      "method": "GET",
+      "endpoint": "/clients/4",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar telefone do cliente",
+      "method": "PUT",
+      "endpoint": "/clients/4",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "CPF repetido retorna 409",
+      "method": "POST",
+      "endpoint": "/clients",
+      "expected": 409,
+      "actual": 409
+    },
+    {
+      "name": "Cadastrar veículo do cliente",
+      "method": "POST",
+      "endpoint": "/vehicles",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar veículos",
+      "method": "GET",
+      "endpoint": "/vehicles",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar veículo por ID",
+      "method": "GET",
+      "endpoint": "/vehicles/5",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar quilometragem",
+      "method": "PUT",
+      "endpoint": "/vehicles/5",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastrar mecânico",
+      "method": "POST",
+      "endpoint": "/users",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar equipe",
+      "method": "GET",
+      "endpoint": "/users",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar mecânico por ID",
+      "method": "GET",
+      "endpoint": "/users/8",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar nome do mecânico",
+      "method": "PUT",
+      "endpoint": "/users/8",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastrar serviço",
+      "method": "POST",
+      "endpoint": "/services",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar serviços",
+      "method": "GET",
+      "endpoint": "/services",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar serviço por ID",
+      "method": "GET",
+      "endpoint": "/services/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar valor do serviço",
+      "method": "PUT",
+      "endpoint": "/services/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastrar fornecedor",
+      "method": "POST",
+      "endpoint": "/suppliers",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar fornecedores",
+      "method": "GET",
+      "endpoint": "/suppliers",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar fornecedor por ID",
+      "method": "GET",
+      "endpoint": "/suppliers/3",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar prazo do fornecedor",
+      "method": "PUT",
+      "endpoint": "/suppliers/3",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastrar peça com fornecedor",
+      "method": "POST",
+      "endpoint": "/parts",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar peças",
+      "method": "GET",
+      "endpoint": "/parts",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar peça por ID",
+      "method": "GET",
+      "endpoint": "/parts/9",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar preço da peça",
+      "method": "PUT",
+      "endpoint": "/parts/9",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Registrar entrada de estoque",
+      "method": "POST",
+      "endpoint": "/stock/entries",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar movimentações",
+      "method": "GET",
+      "endpoint": "/movements",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar movimentação por ID",
+      "method": "GET",
+      "endpoint": "/movements/9",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Corrigir quantidade da entrada",
+      "method": "PUT",
+      "endpoint": "/movements/9",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Excluir entrada sem consumo e devolver saldo",
+      "method": "DELETE",
+      "endpoint": "/movements/9",
+      "expected": 204,
+      "actual": 204
+    },
+    {
+      "name": "Consulta personalizada — peças abaixo do mínimo",
+      "method": "GET",
+      "endpoint": "/queries/parts/low-stock",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Abastecer duas unidades para a O.S.",
+      "method": "POST",
+      "endpoint": "/stock/entries",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Cadastrar agendamento",
+      "method": "POST",
+      "endpoint": "/appointments",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar agendamentos",
+      "method": "GET",
+      "endpoint": "/appointments",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar agendamento por ID",
+      "method": "GET",
+      "endpoint": "/appointments/4",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consulta personalizada — agenda do mecânico por data",
+      "method": "GET",
+      "endpoint": "/queries/appointments?date=2026-11-18&mechanicId=8",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Horário ocupado retorna 409",
+      "method": "POST",
+      "endpoint": "/appointments",
+      "expected": 409,
+      "actual": 409
+    },
+    {
+      "name": "Remarcar atendimento com motivo",
+      "method": "PUT",
+      "endpoint": "/appointments/4",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cancelar agendamento preservando histórico",
+      "method": "DELETE",
+      "endpoint": "/appointments/4",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Abrir O.S. em rascunho",
+      "method": "POST",
+      "endpoint": "/orders",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar ordens de serviço",
+      "method": "GET",
+      "endpoint": "/orders",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar O.S. por ID",
+      "method": "GET",
+      "endpoint": "/orders/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar relato da O.S. aberta",
+      "method": "PUT",
+      "endpoint": "/orders/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cancelar O.S. sem execução",
+      "method": "DELETE",
+      "endpoint": "/orders/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Abrir atendimento para execução",
+      "method": "POST",
+      "endpoint": "/orders",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Acrescentar peça aprovada pelo cliente",
+      "method": "POST",
+      "endpoint": "/orders/8/items",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Iniciar inspeção",
+      "method": "POST",
+      "endpoint": "/orders/8/status",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Criar orçamento complementar",
+      "method": "POST",
+      "endpoint": "/budgets",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar orçamentos",
+      "method": "GET",
+      "endpoint": "/budgets",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar orçamento por ID",
+      "method": "GET",
+      "endpoint": "/budgets/2",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar orçamento em rascunho",
+      "method": "PUT",
+      "endpoint": "/budgets/2",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Excluir orçamento ainda não publicado",
+      "method": "DELETE",
+      "endpoint": "/budgets/2",
+      "expected": 204,
+      "actual": 204
+    },
+    {
+      "name": "Criar proposta para aprovação",
+      "method": "POST",
+      "endpoint": "/budgets",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Publicar proposta ao cliente",
+      "method": "POST",
+      "endpoint": "/budgets/3/publish",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Bloquear execução enquanto há item pendente — 409",
+      "method": "POST",
+      "endpoint": "/orders/8/status",
+      "expected": 409,
+      "actual": 409
+    },
+    {
+      "name": "Registrar aprovação formal do orçamento",
+      "method": "POST",
+      "endpoint": "/budgets/3/decisions",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Bloquear saída maior que o saldo — 409",
+      "method": "POST",
+      "endpoint": "/orders/8/execute",
+      "expected": 409,
+      "actual": 409
+    },
+    {
+      "name": "Completar estoque antes da aplicação",
+      "method": "POST",
+      "endpoint": "/stock/entries",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Executar serviço inicial",
+      "method": "POST",
+      "endpoint": "/orders/8/execute",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Aplicar peça e baixar três unidades",
+      "method": "POST",
+      "endpoint": "/orders/8/execute",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Executar serviço complementar aprovado",
+      "method": "POST",
+      "endpoint": "/orders/8/execute",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Concluir ordem com todos os itens executados",
+      "method": "POST",
+      "endpoint": "/orders/8/status",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Encerrar atendimento e iniciar garantia",
+      "method": "POST",
+      "endpoint": "/orders/8/status",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar relatório de serviços e consumo",
+      "method": "GET",
+      "endpoint": "/reports?from=2000-01-01&to=2999-12-31",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cadastrar solicitação de atendimento",
+      "method": "POST",
+      "endpoint": "/service-requests",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar solicitações",
+      "method": "GET",
+      "endpoint": "/service-requests",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar solicitação por ID",
+      "method": "GET",
+      "endpoint": "/service-requests/1",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Marcar solicitação em contato",
+      "method": "PUT",
+      "endpoint": "/service-requests/1",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cancelar solicitação",
+      "method": "DELETE",
+      "endpoint": "/service-requests/1",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Abrir chamado de pós-venda",
+      "method": "POST",
+      "endpoint": "/tickets",
+      "expected": 201,
+      "actual": 201
+    },
+    {
+      "name": "Listar chamados",
+      "method": "GET",
+      "endpoint": "/tickets",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Consultar chamado por ID",
+      "method": "GET",
+      "endpoint": "/tickets/1",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Atualizar anotação do chamado",
+      "method": "PUT",
+      "endpoint": "/tickets/1",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Excluir chamado ainda sem decisão",
+      "method": "DELETE",
+      "endpoint": "/tickets/1",
+      "expected": 204,
+      "actual": 204
+    },
+    {
+      "name": "Inativar peça preservando movimentações",
+      "method": "DELETE",
+      "endpoint": "/parts/9",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Inativar fornecedor",
+      "method": "DELETE",
+      "endpoint": "/suppliers/3",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Inativar serviço",
+      "method": "DELETE",
+      "endpoint": "/services/7",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Inativar veículo",
+      "method": "DELETE",
+      "endpoint": "/vehicles/5",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Inativar usuário da equipe",
+      "method": "DELETE",
+      "endpoint": "/users/8",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Excluir dados pessoais do cliente",
+      "method": "DELETE",
+      "endpoint": "/clients/4",
+      "expected": 200,
+      "actual": 200
+    }
+  ]
+}

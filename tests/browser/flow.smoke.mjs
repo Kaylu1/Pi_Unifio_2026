@@ -84,6 +84,6 @@ try{
  await page.goto(base+'/ordens/'+order.id);await expect(page.locator('h1 .status-pill')).toHaveText('Encerrada');
  assert.equal(errors.length,0,'Browser errors: '+errors.join('; '));
  await fs.writeFile(path.join(output,'result.json'),JSON.stringify({passed:true,orderId:order.id,number:order.number,resolutions:[320,1280,1920],publicBudgetPrivacy:true,oneTimeLink:true,closureGuard:true,persistedAfterReload:true,pageErrors:errors},null,2));
- console.log('PASS: fluxo real navegador/API/SQLite, privacidade, aprovação, execução, encerramento e responsividade320/1280/1920. Evidências: '+output);
+ console.log('PASS: fluxo real navegador/API/banco local, privacidade, aprovação, execução, encerramento e responsividade320/1280/1920. Evidências: '+output);
 }catch(error){await page.screenshot({path:path.join(output,'failure.png'),fullPage:true}).catch(()=>{});await fs.writeFile(path.join(output,'failure.txt'),String(error.stack||error));throw error;}
 finally{await browser.close();}

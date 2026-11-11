@@ -142,17 +142,17 @@ test('Solicitação rejeita seleção inválida, serviço inativo, diagnóstico 
  async function submit(body) {
   return await request(a, '/public/service-requests', { method: 'POST', body });
  }
- assert.equal((await submit({ ...input, serviceIds: [] })).status, 422);
- assert.equal((await submit({ ...input, serviceIds: [1, 1] })).status, 422);
- assert.equal((await submit({ ...input, serviceIds: ['1'] })).status, 422);
- assert.equal((await submit({ ...input, serviceIds: [5], symptoms: '' })).status, 422);
- assert.equal((await submit({ ...input, phone: '123' })).status, 422);
- assert.equal((await submit({ ...input, preferredDate: '2020-01-01' })).status, 422);
- assert.equal((await submit({ ...input, preferredPeriod: 'noite' })).status, 422);
+ assert.equal((await submit({ ...input, serviceIds: [] })).status, 400);
+ assert.equal((await submit({ ...input, serviceIds: [1, 1] })).status, 400);
+ assert.equal((await submit({ ...input, serviceIds: ['1'] })).status, 400);
+ assert.equal((await submit({ ...input, serviceIds: [5], symptoms: '' })).status, 400);
+ assert.equal((await submit({ ...input, phone: '123' })).status, 400);
+ assert.equal((await submit({ ...input, preferredDate: '2020-01-01' })).status, 400);
+ assert.equal((await submit({ ...input, preferredPeriod: 'noite' })).status, 400);
  assert.equal((await a.store.list('service_requests')).length, 0);
  const inactive = await a.store.get('services', 1);
  await a.store.save('services', { ...inactive, active: false });
- assert.equal((await submit({ ...input, serviceIds: [1] })).status, 422);
+ assert.equal((await submit({ ...input, serviceIds: [1] })).status, 400);
 });
 test('Solicitação enviada permanece na base SQLite após reiniciar a API', async t => {
  const directory = mkdtempSync(join(tmpdir(), 'oscar-request-'));

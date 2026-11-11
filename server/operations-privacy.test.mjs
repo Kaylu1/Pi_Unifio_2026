@@ -139,6 +139,6 @@ test('RF16 / item inicial exige resposta formal e não cria pendência sem fluxo
     const before = (await store.get('orders', 3)).items.length;
     const response = await request('/orders/3/items', { method: 'POST', session: attendant,
         body: { serviceId: 1, decision: 'pendente', approvalMethod: 'presencial' } });
-    assert.equal(response.status, 422);
+    assert.equal(response.status, 400);
     assert.equal((await store.get('orders', 3)).items.length, before);
 });

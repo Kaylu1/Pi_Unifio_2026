@@ -1,0 +1,129 @@
+erDiagram
+  clients ||--o{ vehicles : possui
+  clients |o--o{ users : acesso_do_cliente
+  clients |o--o{ service_requests : identifica
+  clients ||--o{ appointments : agenda
+  clients ||--o{ orders : solicita
+  clients ||--o{ tickets : abre
+  vehicles |o--o{ service_requests : identifica
+  vehicles ||--o{ appointments : reservado
+  vehicles ||--o{ orders : atendido
+  users ||--o{ appointments : mecanico
+  users ||--o{ orders : responsavel
+  users |o--o{ movements : registra
+  service_requests |o--o{ appointments : confirmado
+  appointments ||--o{ appointment_services : inclui
+  services ||--o{ appointment_services : compoe
+  appointments |o--o{ orders : origina
+  orders |o--o{ orders : retorno_garantia
+  orders ||--o{ order_items : possui
+  services |o--o{ order_items : servico
+  parts |o--o{ order_items : peca
+  orders ||--o{ budgets : recebe
+  orders |o--o{ movements : consumo
+  orders ||--o{ tickets : pos_venda
+  suppliers |o--o{ parts : fornece
+  suppliers |o--o{ movements : entrega
+  parts ||--o{ movements : movimenta
+  clients {
+    int id PK
+    string name
+    string cpf UK
+    string phone
+    string email
+    boolean active
+  }
+  vehicles {
+    int id PK
+    int clientId FK
+    string plate UK
+    string chassis UK
+    string model
+  }
+  users {
+    int id PK
+    int clientId FK
+    string email UK
+    string passwordHash
+    string role
+  }
+  services {
+    int id PK
+    string name
+    decimal price
+    int durationMinutes
+    string purpose
+  }
+  suppliers {
+    int id PK
+    string name
+    string cnpj UK
+    int leadDays
+  }
+  parts {
+    int id PK
+    int supplierId FK
+    string code UK
+    decimal stock
+    decimal manualMinimum
+  }
+  service_requests {
+    int id PK
+    int clientId FK
+    int vehicleId FK
+    string name
+    string status
+  }
+  appointments {
+    int id PK
+    int clientId FK
+    int vehicleId FK
+    int mechanicId FK
+    int serviceRequestId FK
+    date date
+    string time
+  }
+  appointment_services {
+    int appointmentId PK, FK
+    int serviceId PK, FK
+  }
+  orders {
+    int id PK
+    int clientId FK
+    int vehicleId FK
+    int mechanicId FK
+    int appointmentId FK
+    int originOrderId FK
+    string status
+  }
+  order_items {
+    int orderId PK, FK
+    string itemId PK
+    string section PK
+    int serviceId FK
+    int partId FK
+    decimal quantity
+    decimal price
+    string decision
+  }
+  budgets {
+    int id PK
+    int orderId FK
+    int number UK
+    string status
+  }
+  movements {
+    int id PK
+    int partId FK
+    int orderId FK
+    int supplierId FK
+    int userId FK
+    string type
+    decimal quantity
+  }
+  tickets {
+    int id PK
+    int orderId FK
+    int clientId FK
+    string status
+  }

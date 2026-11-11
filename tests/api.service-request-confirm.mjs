@@ -290,7 +290,7 @@ test('sem contato confirmado, serviço inativo ou mudança de catálogo, confirm
     appointments: (await a.store.list('appointments')).length,
   };
   assert.equal((await call(a, path, { method: 'POST', session,
-    body: { ...bookingBody, contactConfirmed: false } })).status, 422);
+    body: { ...bookingBody, contactConfirmed: false } })).status, 400);
   const service = await a.store.get('services', requestBody.serviceIds[0]);
   await a.store.save('services', { ...service, price: service.price + 50,
     durationMinutes: service.durationMinutes + 30 });
@@ -312,7 +312,7 @@ test('sem contato confirmado, serviço inativo ou mudança de catálogo, confirm
   const beforeInactive = (await a.store.list('clients')).length;
   assert.equal((await call(a, `/service-requests/${other.data.id}/confirm`, {
     method: 'POST', session, body: bookingBody,
-  })).status, 422);
+  })).status, 400);
   assert.equal((await a.store.list('clients')).length, beforeInactive);
 });
 
@@ -331,7 +331,7 @@ test('perfis e vínculo existentes exigem confirmação de identidade e horário
   const session = await login(a);
   assert.equal((await call(a, path, { method: 'POST', session,
     body: { ...bookingBody, date: '2020-01-01', clientId: 1, vehicleId: 1,
-      acceptIdentityMismatch: true } })).status, 422);
+      acceptIdentityMismatch: true } })).status, 400);
   assert.equal((await call(a, path, { method: 'POST', session,
     body: { ...bookingBody, clientId: 1, vehicleId: 1 } })).status, 409);
   const confirmed = await call(a, path, { method: 'POST', session,
@@ -341,11 +341,11 @@ test('perfis e vínculo existentes exigem confirmação de identidade e horário
   assert.equal(confirmed.data.client.id, 1);
   assert.equal(confirmed.data.vehicle.id, 1);
   assert.equal((await call(a, '/availability?date=2020-01-01&serviceIds=1',
-    { session })).status, 422);
+    { session })).status, 400);
   assert.equal((await call(a, '/appointments', { method: 'POST', session, body: {
     clientId: 1, vehicleId: 1, mechanicId: 3, serviceIds: [1],
     date: '2020-01-01', time: '09:00',
-  } })).status, 422);
+  } })).status, 400);
   const order = await call(a, '/orders', { method: 'POST', session, body: {
     appointmentId: confirmed.data.appointment.id, approvalMethod: 'presencial',
   } });

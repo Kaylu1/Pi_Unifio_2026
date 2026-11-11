@@ -78,7 +78,7 @@ test('PostgreSQL local: pedido do catalogo percorre cadastro, agenda, cancelamen
   const withoutContact = await call(base, `/service-requests/${requestId}/confirm`, {
     method: 'POST', session: manager, body: { ...confirmation, contactConfirmed: false },
   });
-  assert.equal(withoutContact.status, 422);
+  assert.equal(withoutContact.status, 400);
   assert.equal((await pg.store.list('clients')).length, originalClients);
   assert.equal((await pg.store.list('appointments')).length, originalAppointments);
 

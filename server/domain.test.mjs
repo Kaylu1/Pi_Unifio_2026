@@ -115,7 +115,7 @@ describe('RN11 — encerramento depende de execução dos itens aprovados', () =
 
   test('data inválida não simula registro de execução', () => {
     assert.throws(() => assertCanClose([{ decision: 'aprovado', executedAt: 'qualquer-coisa' }]),
-      (error) => error instanceof DomainError && error.status === 422);
+      (error) => error instanceof DomainError && error.status === 400);
   });
 });
 
