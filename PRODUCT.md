@@ -1,7 +1,15 @@
-# OScar
+# OScar — Visão do produto
 
-Projeto acadêmico local de gestão de oficinas automotivas, baseado na ERS_OScar_v1_4.pdf (UNIFIO, versão1.4). Perfis: gerente, atendente, mecânico, consultor técnico e cliente.
+Sistema acadêmico de gestão de oficinas automotivas, desenvolvido no Projeto Integrador da UNIFIO conforme a ERS OScar 1.4. Atende aos perfis de gerente, atendente, mecânico, consultor técnico e cliente.
 
-Inclui o ciclo completo de agendamento, O.S., inspeção, orçamento complementar, autorização, execução, estoque, reposição, garantia e relatórios. A API REST usa SQLite por padrão e tem um modo local opcional para o Supabase dedicado do OScar. A interface é Angular20 com NgModules, routing, Angular Material20 e SCSS.
+O produto acompanha o atendimento desde a solicitação do cliente até o pós-venda: confirmação do agendamento, abertura da ordem de serviço, inspeção, orçamento, aprovação, execução, movimentação de peças, reposição de estoque, garantia e relatórios.
 
-O usuário autorizou versionar o OScar no repositório `Kaylu1/Pi_Unifio_2026`, separado do sistema anterior. A aplicação continua executada localmente; a publicação na Vercel permanece para uma etapa posterior. Assim, a RE05 está em atendimento quanto ao Git e pendente quanto ao deploy.
+A interface utiliza Angular 20, Angular Material e SCSS. A API REST é implementada em Node.js e TypeScript, com os módulos nativos HTTP/HTTPS e separação entre controllers, serviços e repositórios.
+
+| Ambiente | Execução e persistência |
+|---|---|
+| Publicado | Angular e API na Vercel, com PostgreSQL no Supabase exclusivo do OScar e driver `pg` |
+| Desenvolvimento local padrão | Angular e API locais, com MySQL e driver `mysql2/promise` |
+| Testes isolados | PostgreSQL local/PGlite e SQLite para cenários de integração e regressão |
+
+O código é mantido em [Kaylu1/Pi_Unifio_2026](https://github.com/Kaylu1/Pi_Unifio_2026). A publicação e a autenticação foram verificadas em 18/11/2026; os resultados e seus limites estão no [relatório de validação](docs/ACADEMICO-VALIDACAO.md). Instruções de execução e materiais acadêmicos estão no [README](README.md).

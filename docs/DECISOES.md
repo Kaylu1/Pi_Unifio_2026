@@ -1,12 +1,14 @@
 # Decisões do OScar
 
-Base: **ERS OScar 1.4**. Este documento registra escolhas de implementação e diferenças entre o documento e a entrega local. A matriz completa está em [REQUISITOS.md](REQUISITOS.md). Atualização de escopo em 03/11/2026: GitHub autorizado apenas para versionar o OScar; Vercel e publicação da aplicação continuam para depois.
+Base: **ERS OScar 1.4**. Este documento registra as decisões de implementação e sua evolução. A matriz funcional está em [REQUISITOS.md](REQUISITOS.md), e a correspondência com a atividade de backend está em [ACADEMICO-REQUISITOS.md](ACADEMICO-REQUISITOS.md).
 
-## D01 — Projeto independente, execução local e Git separado
+Estado atual: Angular e API Node.js/TypeScript publicados na Vercel, com PostgreSQL no Supabase. O desenvolvimento local padrão utiliza MySQL; SQLite permanece como adaptador de regressão. Os registros de testes de rodadas anteriores são históricos e devem ser lidos com a data e o ambiente indicados. As verificações atuais estão em [ACADEMICO-VALIDACAO.md](ACADEMICO-VALIDACAO.md).
 
-O projeto está em `C:\Users\Kaylu\Desktop\p.i\oscar`, fora da pasta da aplicação anterior de controle de peças. O diretório `p.i` possui aviso `LOCAL_ONLY.md` e `.gitignore` com `*`. O repositório GitHub escolhido para o OScar é `Kaylu1/Pi_Unifio_2026`; as contas e os dados do sistema anterior não fazem parte desta entrega.
+## D01 — Repositório e isolamento dos ambientes
 
-A **RE05 está em atendimento** quanto ao versionamento, autorizado pelo usuário em 03/11/2026. A aplicação ainda não foi publicada na Vercel nem homologada em nuvem.
+O código, as migrações, os testes e a documentação pertencem ao repositório [Kaylu1/Pi_Unifio_2026](https://github.com/Kaylu1/Pi_Unifio_2026). O OScar utiliza configurações e dados próprios. Credenciais locais e bancos de desenvolvimento ficam em arquivos ignorados pelo Git; a implantação utiliza variáveis privadas do servidor.
+
+O desenvolvimento começou restrito ao computador local. O versionamento foi autorizado em 03/11/2026, e a publicação foi autorizada posteriormente. Em 18/11/2026, a API, o login e a sessão foram verificados no endereço publicado. Esse registro comprova as operações executadas naquela conferência, sem estabelecer garantia de disponibilidade contínua.
 
 ## D02 — Angular 20 com módulos e Material 20
 
@@ -14,13 +16,20 @@ O ponto de partida solicitado é `ng new oscar --no-standalone --routing --ssr=f
 
 Referências: [package.json](../package.json), [AppModule](../src/app/app-module.ts), [rotas](../src/app/app-routing-module.ts), [SCSS global](../src/styles.scss).
 
-## D03 — API REST e banco relacional local
+## D03 — API REST e persistência por ambiente
 
-A interface comunica-se com uma API REST Node.js. O banco é SQLite local, com chaves estrangeiras, índices e transações para alterações combinadas de O.S., estoque e auditoria. Dados complementares de cada entidade ficam em JSON, sem eliminar as relações SQL entre clientes, veículos, usuários, agendamentos, ordens, orçamentos e peças.
+A interface comunica-se com uma API REST Node.js/TypeScript, implementada com `node:http` e `node:https`. Controllers recebem as requisições, serviços aplicam os casos de uso e repositórios executam as operações de persistência. Os adaptadores compartilham o contrato [WorkshopRepository](../server/contracts.ts).
 
-A execução padrão atende ao formato REST/relacional da RE03 com SQLite. Por solicitação posterior, o adaptador PostgreSQL foi conectado ao projeto Supabase dedicado do OScar, por meio da API local, e a entrada de função Vercel foi preparada sem deploy. Ambos reutilizam a mesma API e regras.
+| Ambiente | Adaptador e finalidade |
+|---|---|
+| Vercel/Supabase | PostgreSQL com `pg`, selecionado explicitamente pela função da API |
+| Local padrão | MySQL com `mysql2/promise`, iniciado por `npm start` |
+| Testes PostgreSQL | PGlite local, com as migrações do Supabase e dados fictícios |
+| Regressão SQLite | Adaptador mantido para testes e execução por `npm run start:sqlite` |
 
-Referência: [persistência](../server/store.mjs). O arquivo de dados não deve ser confundido com uma cópia de segurança.
+O SQLite foi o banco inicial do projeto; a posterior adoção de MySQL local e PostgreSQL/Supabase substituiu essa configuração padrão. A transação reúne alterações relacionadas de atendimento, estoque e auditoria. Chaves estrangeiras, índices e restrições preservam os vínculos entre entidades; os agregados também armazenam detalhes e retratos históricos em JSON/JSONB.
+
+Referências: [PostgreSQL](../server/postgres-store.ts), [MySQL](../server/repositories/mysql-repository.ts), [SQLite](../server/repositories/sqlite-repository.ts) e [modelos de dados](modelo-dados.svg).
 
 ## D04 — Valores e dados demonstrativos
 
@@ -114,7 +123,7 @@ O modo local depende do computador e do processo em execução. Uma rotina de ba
 
 Ficam fora os itens explicitamente excluídos do MVP: WhatsApp, transporte cortesia, pedidos de compra, autocadastro e autoagendamento do cliente, financeiro, pagamentos, notas fiscais, RH, aplicativo nativo, marketplace, integração contábil e pesquisa automática de satisfação.
 
-O escopo de serviços externos autorizado limita-se ao Supabase dedicado do OScar e ao versionamento em `Kaylu1/Pi_Unifio_2026`. A publicação da aplicação e o uso de dados da aplicação anterior continuam fora desta etapa.
+Os serviços externos utilizados são o Supabase dedicado do OScar, o repositório `Kaylu1/Pi_Unifio_2026` e a implantação na Vercel. O procedimento de configuração e publicação está em [VERCEL.md](VERCEL.md). Credenciais, dados e ambientes pertencem ao OScar.
 
 ## D15 — Verificação do frontend e dependências
 
@@ -128,21 +137,21 @@ Angular e Angular Material permanecem na versão principal 20. Overrides locais 
 O comando `npm run test:browser` usa `scripts/browser-tests.mjs`, cria uma instância temporária do OScar em HTTPS 4212/API 4312 por padrão e um SQLite fictício em `data/test-runs/browser-*`. Executa três suítes: fluxo central, cadastros/agenda/estoque e acessos/perfis. O próprio runner registra resumo, logs e encerramento dos processos que iniciou.
 
 A base da instância principal não participa desse runner. A aprovação conjunta exige `summary.json` com `passed: true`; aprovações individuais prévias não substituem essa evidência conjunta.
-## D17 — Supabase/PostgreSQL e Vercel sem publicação
+## D17 — Supabase/PostgreSQL e função Vercel
 
-A solicitação posterior autorizou configurar o banco Supabase/PostgreSQL dedicado para uso da API local e preparar os arquivos Vercel, sem executar o deploy. Em 03/11/2026, o usuário autorizou separadamente o versionamento Git no repositório `Kaylu1/Pi_Unifio_2026`. As sessões e os perfis continuam próprios do OScar.
+Na primeira etapa, foi autorizado configurar o Supabase/PostgreSQL para a API local e preparar os arquivos da Vercel. O versionamento e a publicação foram autorizados em etapas posteriores. A implantação utiliza o PostgreSQL exclusivo do OScar e os mesmos serviços TypeScript da execução local. As sessões e os perfis são próprios da aplicação.
 
-`server/postgres-store.mjs` usa pool de transações, consultas parametrizadas sem prepared statements nomeados e TLS com verificação. O esquema privado `oscar_private` tem relações, índices e RLS; não deve ser incluído nos esquemas expostos pela Data API do Supabase. As funções da aplicação usam conexão do servidor, não chaves de frontend. Mutações usam transações com bloqueio de coordenação entre instâncias; a capacidade e latência reais ainda precisam ser medidas no ambiente publicado.
+`server/postgres-store.ts` utiliza o driver `pg`, pool de uma conexão por instância, consultas parametrizadas sem prepared statements nomeados e TLS verificado. O schema privado `oscar_private` possui relações, índices e RLS; ele permanece fora dos schemas públicos da Data API do Supabase. A conexão SQL e suas credenciais pertencem ao servidor. Mutações usam transações com bloqueio de coordenação entre instâncias; a capacidade e a latência de produção ainda exigem medição própria.
 
 `api/index.ts` é a única entrada pública de função. Os módulos de negócio foram movidos para `server/` para evitar que cada utilitário se torne um endpoint. O processo serverless não abre listener nem agenda intervalos. A manutenção usa `/api/_maintenance` com segredo e Cron configurado; falta homologar a execução no provedor. O SMTP real continua opcional e precisa de teste de entrega.
 
 Em 18/11/2026, o erro de inicialização foi reproduzido no pacote real da Vercel: a compilação emitia JavaScript sem atualizar todas as referências aos fontes TypeScript. A entrada importa os módulos `.ts` diretamente, e as configurações em `api/` e `server/` habilitam `rewriteRelativeImportExtensions`. O teste da função compilada executa os arquivos emitidos e impede que os fontes originais ocultem uma dependência ausente.
 
-Não existe fallback SQLite nem seed demonstrativo na entrada de nuvem. O primeiro gerente é criado pelo SQL gerado localmente com hash scrypt; o SQL não contém a senha em texto puro e permanece excluído de pacotes. `npm start` permanece local e força SQLite para não aproveitar acidentalmente variáveis de banco remoto.
+A entrada de nuvem exige PostgreSQL configurado e não cria uma base SQLite ou dados demonstrativos. O preparo inicial do gerente utiliza hash scrypt, com credenciais privadas fora dos arquivos versionados. `npm start` utiliza o MySQL local; a execução com o Supabase depende do iniciador específico e da configuração do projeto dedicado.
 
 Os snapshots de aplicação no PostgreSQL ficam no esquema privado e são expurgados por titular; tombstones impedem a reintrodução de dados pessoais numa restauração desses snapshots. Isso não elimina os backups físicos e históricos mantidos pelo provedor. Retenção, recuperação de desastre e expurgo das cópias do provedor precisam de política própria; snapshots no mesmo banco não substituem uma cópia externa independente.
 
-Roteiros: [Supabase](SUPABASE.md), [Vercel](VERCEL.md), [variáveis de exemplo](../.env.example). O SQL foi validado num PostgreSQL WASM local e a conexão com o Supabase dedicado foi confirmada em 28/10/2026. Essa validação não comprova roteamento, disponibilidade ou publicação da aplicação na nuvem.
+Roteiros: [Supabase](SUPABASE.md), [Vercel](VERCEL.md) e [variáveis de exemplo](../.env.example). A primeira conexão com o projeto dedicado foi confirmada em 28/10/2026. Em 18/11/2026, após a recuperação do banco e a correção do pacote da função, saúde da API, login, consulta de sessão e logout responderam 200 no domínio publicado. As verificações locais, as operações de nuvem e seus limites estão identificados separadamente no [relatório de validação](ACADEMICO-VALIDACAO.md).
 ## D18 — Nova identidade e mídia inteiramente locais
 
 Por escolha explícita do usuário, a identidade anterior foi substituída por **grafite, branco e laranja**. Manrope nos títulos e DM Sans nos controles/corpo continuam locais. Navegação, painel, cadastros, estoque, O.S., recuperação, catálogo e aprovação pública compartilham tokens e materiais; cada módulo tem composição apropriada à tarefa. O sistema visual está documentado em [DESIGN.md](../DESIGN.md).
