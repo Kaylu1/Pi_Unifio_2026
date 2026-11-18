@@ -47,3 +47,20 @@ Os testes de MySQL verificam FKs, rollback, duas reservas concorrentes do mesmo 
 No navegador, o caminho foi Angular → API TypeScript → MySQL oscar_test. Foram verificados cadastro e edição, disponibilidade/remarcação, estoque e estorno, catálogo e confirmação do pedido, orçamento, aprovação pública, conclusão, garantia, permissões, logout e navegação em telas pequenas. O banco principal oscar_local não foi usado por essas suítes.
 
 O build ainda emite um aviso de tamanho: pacote inicial de aproximadamente 1,47 MB frente ao limite de aviso de 1,30 MB. A compilação passa. O audit completo mantém 16 avisos moderados em dependências de desenvolvimento da CLI do Angular; a correção automática oferecida exige troca de versão principal da CLI. As dependências de execução não apresentaram avisos na consulta registrada.
+
+## Nova conferência em 18/11/2026
+
+O código foi comparado novamente com o enunciado fornecido pelo grupo, considerando a substituição autorizada de Spring Boot e JPA por Node.js e TypeScript.
+
+| Comando executado nesta conferência | Resultado |
+|---|---|
+| npm.cmd run typecheck | Aprovado em modo estrito |
+| npm.cmd test | 148 testes aprovados, zero falhas |
+| npm.cmd run test:mysql | 10 testes aprovados, zero falhas, em MySQL Community 8.4.13 |
+| npm.cmd run build | Aprovado; aviso de pacote inicial de aproximadamente 1,47 MB |
+
+Os testes de MySQL utilizaram exclusivamente `oscar_test`. O README foi revisado para identificar os módulos nativos HTTP/HTTPS do Node.js, o driver `mysql2/promise`, as equivalências tecnológicas e os comandos de verificação com MySQL.
+
+A coleção existente foi inspecionada: 87 requisições, 87 exemplos de respostas e 28 variáveis com valores incluídos. A execução do Newman e as cinco suítes de navegador descritas anteriormente permanecem como evidências de **11/11/2026**; não foram repetidas nesta conferência. O audit de dependências também não foi repetido.
+
+As ressalvas de procedência do projeto-base, uso manual de Save Response e entrega acadêmica estão descritas na [matriz de requisitos](ACADEMICO-REQUISITOS.md).

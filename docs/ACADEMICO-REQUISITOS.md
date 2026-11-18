@@ -2,6 +2,8 @@
 
 O domínio é o da oficina OScar. O professor autorizou a substituição de Spring Boot e JPA por Node.js e TypeScript, conforme informado pelo grupo. Esta matriz mantém os objetivos da atividade e indica onde demonstrá-los.
 
+Na conferência de **18/11/2026**, os requisitos técnicos da adaptação foram identificados no código e nas evidências. O back-end utiliza os módulos nativos `node:http` e `node:https`; o acesso ao MySQL é realizado pelo driver `mysql2/promise`, com SQL parametrizado e transações.
+
 | Critério | Implementação e evidência |
 |---|---|
 | Modelagem e relacionamentos — 0,8 | Doze entidades reais e duas tabelas associativas no MySQL. PK, FK, índices e checks em [mysql-schema.sql](../server/repositories/mysql-schema.sql). [Diagrama](modelo-dados.svg). |
@@ -39,3 +41,23 @@ appointment_services e order_items resolvem relações entre as entidades. Audit
 Execute a coleção na fixture oscar_test. Ela interrompe a captura se qualquer status divergir do esperado e só então grava os exemplos. Os testes de MySQL verificam a persistência e os relacionamentos. Os testes do navegador verificam o caminho Angular → API → banco.
 
 Os resultados descrevem os cenários executados localmente. A aprovação da avaliação continua dependendo da demonstração e da compreensão do grupo.
+
+## Conferência de 18/11/2026
+
+| Verificação executada novamente | Resultado |
+|---|---|
+| TypeScript em modo estrito | Sem erros |
+| Suíte geral de testes | 148 aprovados, nenhuma falha |
+| Integração com MySQL Community 8.4.13 | 10 aprovados, nenhuma falha |
+| Build do Angular e verificação de CSP | Aprovados; permanece o aviso de tamanho do pacote inicial |
+| Coleção Postman existente | 87 requisições, 87 exemplos de respostas e 28 variáveis preenchidas |
+
+As evidências da coleção e da execução pelo Newman são de **11/11/2026**. A conferência atual verificou a estrutura desses arquivos e repetiu os testes da aplicação; ela não representa uma nova execução do Newman ou das suítes de navegador.
+
+## Pontos formais que dependem do grupo
+
+- **Projeto-base do professor:** o enunciado exige utilizar o e-commerce disponibilizado em aula como ponto de partida. A autorização informada cobre a substituição tecnológica. O código e o histórico examinados não comprovam uma derivação direta do repositório Java; o aceite dessa implementação própria do OScar deve abranger também esse requisito de origem.
+- **Uso do aplicativo Postman:** a coleção contém respostas reais exportadas como exemplos, e sua reprodução pelo Newman está registrada. Não foi registrada uma demonstração manual do recurso **Save Response** no aplicativo. Para seguir literalmente essa orientação, o grupo deve importar a coleção, executar as requisições e salvar os exemplos pelo Postman.
+- **Entrega e apresentação:** a submissão do link no Ambiente Conhecer e a compreensão individual do código não podem ser comprovadas por testes automatizados. Essas etapas devem ser realizadas pelo grupo.
+
+Esses pontos são distintos da presença das funcionalidades e dos arquivos exigidos. A matriz não afirma procedência do código ou ações manuais que não foram verificadas.
