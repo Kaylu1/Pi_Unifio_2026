@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { cloudConfiguration, normalizedApiUrl, createVercelHandler } from '../api/index.mjs';
+import { cloudConfiguration, normalizedApiUrl, createVercelHandler } from '../api/index.ts';
 const env={APP_ORIGIN:'https://oscar.example.test',DATABASE_URL:'postgresql://fake_user:fake_password@db.example.test:6543/postgres',CRON_SECRET:'offline-test-cron-secret-1234567890'};
 const req=(url,extra={})=>({url,method:'GET',headers:{host:'oscar.example.test'},...extra});
 function res(){return{statusCode:0,headers:{},headersSent:false,writableEnded:false,writeHead(status,headers){this.statusCode=status;this.headers={...this.headers,...headers};this.headersSent=true;},end(body=''){this.body=body;this.writableEnded=true;},json(){return JSON.parse(this.body);}};}
@@ -9,6 +9,7 @@ function res(){return{statusCode:0,headers:{},headersSent:false,writableEnded:fa
 test('normalização suporta URL original, URL reescrita e helperquery preservando filtros',()=>{
  assert.equal(normalizedApiUrl(req('/api/clients?q=Ana&page=2'),env.APP_ORIGIN),'/api/clients?q=Ana&page=2');
  assert.equal(normalizedApiUrl(req('/api/index?__oscar_path=orders%2F12&status=aberta'),env.APP_ORIGIN),'/api/orders/12?status=aberta');
+ assert.equal(normalizedApiUrl(req('/api/index.ts?__oscar_path=health'),env.APP_ORIGIN),'/api/health');
  assert.equal(normalizedApiUrl(req('/api/index',{query:{__oscar_path:'parts',q:'Filtro de óleo',page:'2'}}),env.APP_ORIGIN),'/api/parts?q=Filtro+de+%C3%B3leo&page=2');
  assert.equal(normalizedApiUrl(req('/api/clients?__oscar_path=login&q=Ana'),env.APP_ORIGIN),'/api/clients?q=Ana');
  assert.equal(normalizedApiUrl(req('/api'),env.APP_ORIGIN),'/api/');
@@ -45,7 +46,7 @@ test('falha do banco não revela segredo e inicialização pode ser tentada nova
 });
 test('configuração Vercel usa uma função, SPA sem capturar API e cron diário protegido',async()=>{
  const config=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
- assert.equal(config.framework,'angular');assert.equal(config.outputDirectory,'dist/oscar/browser');assert.equal(config.buildCommand,'npm run build');assert.deepEqual(Object.keys(config.functions),['api/index.mjs']);assert.equal(config.crons.length,1);assert.equal(config.crons[0].path,'/api/_maintenance');assert.match(config.crons[0].schedule,/^\d+ \d+ \* \* \*$/);assert.equal(config.rewrites[1].source,'/api/:path*');assert.match(config.rewrites[1].destination,/__oscar_path=:path\*/);
+ assert.equal(config.framework,'angular');assert.equal(config.outputDirectory,'dist/oscar/browser');assert.equal(config.buildCommand,'npm run build');assert.deepEqual(Object.keys(config.functions),['api/index.ts']);assert.equal(config.crons.length,1);assert.equal(config.crons[0].path,'/api/_maintenance');assert.match(config.crons[0].schedule,/^\d+ \d+ \* \* \*$/);assert.equal(config.rewrites[1].source,'/api/:path*');assert.match(config.rewrites[1].destination,/__oscar_path=:path\*/);
  const fallback=new RegExp('^'+config.rewrites.at(-1).source+'$');assert.ok(fallback.test('/ordens/12'));assert.ok(fallback.test('/redefinir/abc-token'));assert.ok(!fallback.test('/api/missing'));assert.ok(!fallback.test('/api'));assert.ok(!fallback.test('/main-ABC12345.js'));assert.ok(!fallback.test('/media/font.woff2'));
  const csp=config.headers.flatMap(rule=>rule.headers).find(header=>header.key==='Content-Security-Policy').value;assert.match(csp,/script-src 'self'/);assert.match(csp,/style-src 'self' 'unsafe-inline'/);assert.match(csp,/connect-src 'self'/);assert.doesNotMatch(csp,/unsafe-eval|https:\/\//);
  const ignore=await readFile(new URL('../.vercelignore',import.meta.url),'utf8');for(const pattern of ['data/**','.env.*','supabase/**','server/*.test.mjs','tests/**','docs/**','*.pdf'])assert.ok(ignore.split(/\r?\n/).includes(pattern),pattern+' deve ficar fora do upload.');

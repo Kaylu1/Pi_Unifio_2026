@@ -17,7 +17,7 @@ Conforme autorização concedida pelo professor ao grupo, a implementação orig
 | Tratamento centralizado de exceções | Classe `DomainError` e tratamento central no `ApiController`, com mensagens e códigos HTTP apropriados |
 | Spring Security com HTTP Basic | Autenticação HTTP Basic no `AuthService` e validações de permissão por perfil nos serviços, por meio de `allow()` em `common.ts` |
 
-O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`** mantém a conexão privada com o PostgreSQL; os mapeamentos e as consultas são definidos nos repositórios. Na Vercel, `api/index.mjs` recebe a requisição e injeta esse repositório nos mesmos serviços TypeScript. O Angular chama `/api` na própria origem.
+O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`** mantém a conexão privada com o PostgreSQL; os mapeamentos e as consultas são definidos nos repositórios. Na Vercel, `api/index.ts` recebe a requisição e injeta esse repositório nos mesmos serviços TypeScript. O Angular chama `/api` na própria origem.
 
 ## Tecnologias utilizadas
 
@@ -52,7 +52,7 @@ O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`
 
 A configuração da implantação está documentada em [Vercel](docs/VERCEL.md) e [Supabase](docs/SUPABASE.md). Credenciais SQL e variáveis privadas pertencem ao servidor. Os bancos de desenvolvimento e teste não são sincronizados automaticamente com a base de nuvem.
 
-Em **18/11/2026**, após a reativação do Supabase, as conexões verificadas por TLS nas portas `5432` e `6543` funcionaram. O adaptador da Vercel executado localmente com esse banco respondeu `200` em `/api/health`, dentro de uma transação somente de leitura. A página publicada respondeu `200`, mas a API publicada continuou com `503`; a inicialização no ambiente da Vercel ainda precisa ser diagnosticada. A execução local não comprova funcionamento do deploy.
+Na investigação de **18/11/2026**, as conexões ao Supabase nas portas `5432` e `6543` funcionaram com verificação TLS. A falha `503` foi reproduzida no pacote da Vercel: arquivos JavaScript ainda importavam fontes `.ts` ausentes. A entrada da função passou a usar TypeScript diretamente, com configurações próprias que reescrevem as extensões na compilação. O teste `tests/vercel-compiled.test.mjs` executa os arquivos JavaScript emitidos; a disponibilidade do endereço publicado deve ser conferida separadamente em `/api/health`.
 
 ## Configuração e execução local com MySQL
 
@@ -109,7 +109,7 @@ oscar/
 ├── package.json
 ├── package-lock.json
 ├── vercel.json
-├── api/index.mjs
+├── api/index.ts
 ├── docs/
 │   ├── modelo-dados.png
 │   └── documentacao-api.md

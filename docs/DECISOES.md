@@ -134,7 +134,9 @@ A solicitação posterior autorizou configurar o banco Supabase/PostgreSQL dedic
 
 `server/postgres-store.mjs` usa pool de transações, consultas parametrizadas sem prepared statements nomeados e TLS com verificação. O esquema privado `oscar_private` tem relações, índices e RLS; não deve ser incluído nos esquemas expostos pela Data API do Supabase. As funções da aplicação usam conexão do servidor, não chaves de frontend. Mutações usam transações com bloqueio de coordenação entre instâncias; a capacidade e latência reais ainda precisam ser medidas no ambiente publicado.
 
-`api/index.mjs` é a única entrada pública de função. Os módulos de negócio foram movidos para `server/` para evitar que cada utilitário se torne um endpoint. O processo serverless não abre listener nem agenda intervalos. A manutenção usa `/api/_maintenance` com segredo e Cron configurado; falta homologar a execução no provedor. O SMTP real continua opcional e precisa de teste de entrega.
+`api/index.ts` é a única entrada pública de função. Os módulos de negócio foram movidos para `server/` para evitar que cada utilitário se torne um endpoint. O processo serverless não abre listener nem agenda intervalos. A manutenção usa `/api/_maintenance` com segredo e Cron configurado; falta homologar a execução no provedor. O SMTP real continua opcional e precisa de teste de entrega.
+
+Em 18/11/2026, o erro de inicialização foi reproduzido no pacote real da Vercel: a compilação emitia JavaScript sem atualizar todas as referências aos fontes TypeScript. A entrada importa os módulos `.ts` diretamente, e as configurações em `api/` e `server/` habilitam `rewriteRelativeImportExtensions`. O teste da função compilada executa os arquivos emitidos e impede que os fontes originais ocultem uma dependência ausente.
 
 Não existe fallback SQLite nem seed demonstrativo na entrada de nuvem. O primeiro gerente é criado pelo SQL gerado localmente com hash scrypt; o SQL não contém a senha em texto puro e permanece excluído de pacotes. `npm start` permanece local e força SQLite para não aproveitar acidentalmente variáveis de banco remoto.
 

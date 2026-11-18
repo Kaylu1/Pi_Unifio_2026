@@ -197,7 +197,7 @@ As execuções futuras de `npm run test:browser` usam [scripts/browser-tests.mjs
 
 ## Integração Supabase e preparação Vercel
 
-O adaptador PostgreSQL reutiliza a API e regras de negócio. A migração [principal](../supabase/migrations/202610220001_oscar_private.sql) e o [complemento de solicitações](SQL_PARA_APLICAR_DEPOIS.txt) criam 21 tabelas privadas com RLS e restrição de acesso; não criam contas demonstrativas. O Supabase dedicado foi configurado em 28/10/2026 e o login do gerente foi validado. A entrada `api/index.mjs` exige as variáveis de servidor e não utiliza SQLite. Os testes `tests/postgres*.mjs` e `tests/cloud-flow.integration.mjs` usam PostgreSQL WASM local; a conexão remota foi verificada separadamente.
+O adaptador PostgreSQL reutiliza a API e regras de negócio. A migração [principal](../supabase/migrations/202610220001_oscar_private.sql) e o [complemento de solicitações](SQL_PARA_APLICAR_DEPOIS.txt) criam 21 tabelas privadas com RLS e restrição de acesso; não criam contas demonstrativas. O Supabase dedicado foi configurado em 28/10/2026 e o login do gerente foi validado. A entrada `api/index.ts` exige as variáveis de servidor e não utiliza SQLite. Os testes `tests/postgres*.mjs` e `tests/cloud-flow.integration.mjs` usam PostgreSQL WASM local; a conexão remota foi verificada separadamente.
 
 A RNF16 tem dois modos: cópias SQLite locais e snapshots privados PostgreSQL com manutenção diária preparada por Cron. A execução periódica real na Vercel e a retenção dos backups físicos do Supabase dependem de configuração e homologação. A RNF14 inclui expurgo dos snapshots da aplicação e preservação das exclusões na restauração; o armazenamento físico e backups do provedor têm retenção própria.
 

@@ -10,12 +10,14 @@ Endereço canônico configurado: **https://pi-unifio-2026.vercel.app**.
 |---|---|
 | `src/` e `public/` | Código e recursos da interface Angular |
 | `server/` | Modelos, regras, serviços e repositórios do back-end TypeScript |
-| `api/index.mjs` | Adaptador de requisição/resposta para a função da Vercel |
+| `api/index.ts` | Adaptador de requisição/resposta para a função da Vercel |
 | `vercel.json` | Build, saída estática, roteamento, cabeçalhos e manutenção |
 | `supabase/migrations/` | Migrações versionadas do PostgreSQL |
 | `.vercelignore` | Exclusão de dados locais, credenciais e artefatos de desenvolvimento do pacote de implantação |
 
 O ponto de entrada serverless injeta `createPostgresStore` na API, reutiliza um pool de uma conexão e processa a requisição pela mesma camada de serviços utilizada no projeto local. A função recebe requisições da plataforma; a abertura da porta HTTP pertence ao iniciador de execução local.
+
+`api/tsconfig.json` e `server/tsconfig.json` estendem a configuração do back-end e habilitam `rewriteRelativeImportExtensions`. A entrada importa diretamente os módulos `.ts`, permitindo que o builder emita os arquivos `.js` e ajuste seus imports. Os wrappers `.mjs` do servidor são destinados à compatibilidade local; a função não depende deles.
 
 ## Configuração versionada
 
@@ -30,7 +32,7 @@ Os valores abaixo correspondem ao [vercel.json](../vercel.json) e ao [package.js
 | Instalação | `npm ci` |
 | Build | `npm run build` |
 | Saída estática | `dist/oscar/browser` |
-| Função da API | `api/index.mjs` |
+| Função da API | `api/index.ts` |
 | Duração máxima configurada da função | 60 segundos |
 | Roteamento da API | `/api` e `/api/*` encaminhados à função |
 | Roteamento da interface | Fallback das rotas Angular para `index.html`, preservando API e arquivos estáticos |
@@ -76,6 +78,6 @@ A configuração versionada e os testes locais não comprovam, por si só, que u
 
 Na conferência de **18/11/2026**, `/entrar` respondeu **200**, mas `/api/health` respondeu **503**. Após a reativação do Supabase, as conexões verificadas por TLS nas portas **5432** e **6543** funcionaram. O adaptador real da Vercel, executado localmente com o Supabase e a configuração privada preparada, respondeu **200** em `/api/health`, com `mode: cloud` e `database: postgres`. Essa comparação usou uma transação **READ ONLY**, encerrada com `ROLLBACK`.
 
-No endereço publicado, `/api/a.b` respondeu **400** e uma requisição com origem externa respondeu **403**. Esses resultados mostram que a validação básica de configuração e o roteamento da função passaram; o **503** permanece na etapa de inicialização. Ainda não foi possível distinguir uma diferença nas variáveis efetivamente implantadas, uma falha de conexão a partir da Vercel ou um problema no carregamento dos módulos publicados.
+No endereço publicado antes da correção, `/api/a.b` respondeu **400** e uma requisição com origem externa respondeu **403**, delimitando a falha à inicialização. A causa foi então reproduzida com o builder real **`@vercel/node` 13.0.2**: os módulos TypeScript eram emitidos como JavaScript, mas os wrappers e os imports do servidor mantinham referências a `.ts` ausentes. O pacote anterior retornou **503** em uma requisição local real, com a mesma mensagem genérica da produção.
 
-A API de nuvem permanece **indisponível na observação registrada**. Os próximos dados necessários são a configuração e os registros de execução do projeto na conta Vercel do proprietário. O teste local não confirma que o ambiente publicado utiliza os mesmos valores ou o mesmo código. Nenhuma alteração remota de dados, migração ou nova implantação foi executada por esta conferência.
+Após a mudança da entrada e das configurações TypeScript, o pacote do mesmo builder iniciou sem diagnósticos: `/api/health` respondeu **200** e `/api/clients` sem autenticação respondeu **401**. O teste `tests/vercel-compiled.test.mjs` também compila a função e verifica essas respostas com PostgreSQL local em memória, bloqueando qualquer carregamento dos fontes originais. Esses resultados comprovam a correção do pacote; a implantação deve ser confirmada no domínio canônico após o envio. A investigação não aplicou migrações nem alterou dados de negócio no Supabase.

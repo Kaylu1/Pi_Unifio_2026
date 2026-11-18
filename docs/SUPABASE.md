@@ -10,7 +10,7 @@ A aplicação mantém um adaptador MySQL para execução local. Os dois ambiente
 Angular → /api na Vercel → serviços TypeScript → repositório PostgreSQL → Supabase
 ```
 
-A função [api/index.mjs](../api/index.mjs) cria e reutiliza um `createPostgresStore` e o injeta na API. O [adaptador PostgreSQL](../server/postgres-store.ts) utiliza `pg.Pool`, com uma conexão por instância da função, consultas parametrizadas e transações. A conexão verifica TLS e o nome do servidor.
+A função [api/index.ts](../api/index.ts) cria e reutiliza um `createPostgresStore` e o injeta na API. O [adaptador PostgreSQL](../server/postgres-store.ts) utiliza `pg.Pool`, com uma conexão por instância da função, consultas parametrizadas e transações. A conexão verifica TLS e o nome do servidor.
 
 O Angular chama a API na mesma origem da aplicação. Credenciais SQL e privilégios administrativos permanecem exclusivamente no servidor. A autenticação é implementada pelo OScar, com HTTP Basic para a API, sessão e CSRF na interface e autorização por perfil nos serviços.
 
@@ -63,6 +63,6 @@ A orientação para a função de nuvem e suas variáveis está em [VERCEL.md](V
 
 Uma tentativa inicial retornou o código PostgreSQL **XX000**. Após o usuário informar a reativação do projeto, as conexões ao pooler nas portas **5432** e **6543** funcionaram com verificação TLS. Consultas somente de leitura confirmaram PostgreSQL **17.11**, as **21 tabelas** de `oscar_private` e a presença de `settings` e `users`.
 
-O adaptador real `api/index.mjs`, executado localmente com as variáveis privadas preparadas para a Vercel e esse Supabase, respondeu **HTTP 200** em `/api/health`, com `mode: cloud` e `database: postgres`. O teste manteve a conexão dentro de uma transação **READ ONLY**, encerrada com `ROLLBACK`.
+O adaptador real `api/index.ts`, executado localmente com as variáveis privadas preparadas para a Vercel e esse Supabase, respondeu **HTTP 200** em `/api/health`, com `mode: cloud` e `database: postgres`. O teste manteve a conexão dentro de uma transação **READ ONLY**, encerrada com `ROLLBACK`.
 
-A API publicada continuou respondendo **HTTP 503**. Assim, a conexão local com o Supabase está comprovada, mas a inicialização na Vercel ainda requer diagnóstico do ambiente efetivamente implantado. Esta conferência não aplicou migrações nem alterou dados remotos.
+A falha **HTTP 503** da publicação foi posteriormente reproduzida no pacote do builder da Vercel: arquivos `.js` importavam fontes `.ts` que não eram distribuídos. A correção usa a entrada `api/index.ts` e configurações TypeScript que reescrevem as extensões. O pacote corrigido respondeu **200** em teste isolado; a confirmação no domínio publicado é uma verificação adicional. Esta conferência não aplicou migrações nem alterou dados de negócio remotos. Os detalhes estão em [VERCEL.md](VERCEL.md).

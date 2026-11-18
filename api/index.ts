@@ -1,22 +1,41 @@
 import { waitUntil as vercelWaitUntil } from '@vercel/functions';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { ApiOptions } from '../server/server.ts';
+import type { WorkshopRepository } from '../server/contracts.ts';
+
+interface CloudRequest extends IncomingMessage {
+  query?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+}
+interface CloudApplication {
+  handler: (req: IncomingMessage, res: ServerResponse) => void | Promise<void>;
+}
+interface HandlerOptions {
+  env?: NodeJS.ProcessEnv;
+  loadApi?: () => Promise<{ createApi: (options: ApiOptions) => CloudApplication }>;
+  loadStore?: () => Promise<{ createPostgresStore: (options: { connectionString: string; sslCa?: string; max: number }) => Promise<WorkshopRepository> }>;
+  log?: (...values: unknown[]) => void;
+  waitUntil?: (promise: Promise<unknown>) => void;
+}
 const ROUTE_PARAMETER = '__oscar_path';
 const unavailable = 'API indisponível. Revise as variáveis de ambiente e a configuração do banco no servidor.';
 class ConfigurationError extends Error {}
 class RouteError extends Error {}
 
 /** Validate server-only configuration before loading either the API or the database driver. */
-export function cloudConfiguration(env = process.env) {
+export function cloudConfiguration(env: NodeJS.ProcessEnv = process.env) {
+  const connectionString = env.DATABASE_URL || '';
   let origin, database;
-  try { origin = new URL(env.APP_ORIGIN || ''); database = new URL(env.DATABASE_URL || ''); }
+  try { origin = new URL(env.APP_ORIGIN || ''); database = new URL(connectionString); }
   catch { throw new ConfigurationError('Configuração de servidor incompleta.'); }
   const placeholder = /SUBSTITUA|YOUR[_-]?PASSWORD|PROJECT[_-]REF|SEU[_-]PROJETO|[<>\[\]]/i;
   if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash || placeholder.test(origin.hostname)) throw new ConfigurationError('APP_ORIGIN inválida.');
-  if (!['postgres:', 'postgresql:'].includes(database.protocol) || !database.hostname || !database.username || !database.password || placeholder.test(env.DATABASE_URL)) throw new ConfigurationError('DATABASE_URL inválida.');
-  if (['disable', 'allow', 'prefer', 'no-verify'].includes(database.searchParams.get('sslmode'))) throw new ConfigurationError('A conexão deve verificar TLS.');
+  if (!['postgres:', 'postgresql:'].includes(database.protocol) || !database.hostname || !database.username || !database.password || placeholder.test(connectionString)) throw new ConfigurationError('DATABASE_URL inválida.');
+  if (['disable', 'allow', 'prefer', 'no-verify'].includes(database.searchParams.get('sslmode') || '')) throw new ConfigurationError('A conexão deve verificar TLS.');
   if (typeof env.CRON_SECRET !== 'string' || env.CRON_SECRET.length < 32 || /SUBSTITUA|GERAR[_-]/i.test(env.CRON_SECRET)) throw new ConfigurationError('CRON_SECRET ausente ou fraco.');
-  return { origin: origin.origin, host: origin.hostname, hostWithPort: origin.host, connectionString: env.DATABASE_URL, sslCa: env.DATABASE_SSL_CA || undefined };
+  return { origin: origin.origin, host: origin.hostname, hostWithPort: origin.host, connectionString, sslCa: env.DATABASE_SSL_CA || undefined };
 }
-function safeSegments(path) {
+function safeSegments(path: string) {
   if (typeof path !== 'string' || path.length > 2048 || path.includes('\\')) throw new RouteError('Rota inválida.');
   if (!path) return '';
   return path.split('/').map(segment => {
@@ -26,7 +45,7 @@ function safeSegments(path) {
   }).join('/');
 }
 /** Vercel may keep the original URL or expose the rewrite's destination query. Accept both. */
-export function normalizedApiUrl(req, appOrigin) {
+export function normalizedApiUrl(req: CloudRequest, appOrigin: string) {
   const raw = String(req.url || '');
   if (!raw.startsWith('/') || raw.startsWith('//') || raw.length > 16384 || raw.split('?')[0].includes('\\')) throw new RouteError('Rota inválida.');
   for (const segment of raw.split('?')[0].split('/')) {
@@ -34,7 +53,7 @@ export function normalizedApiUrl(req, appOrigin) {
     if (decoded === '.' || decoded === '..' || decoded.includes('\\') || decoded.includes('\0')) throw new RouteError('Rota inválida.');
   }
   const url = new URL(raw, appOrigin);
-  const isEntry = ['/api/index', '/api/index.mjs'].includes(url.pathname);
+  const isEntry = ['/api/index', '/api/index.ts', '/api/index.mjs'].includes(url.pathname);
   let path;
   if (isEntry) {
     const values = url.searchParams.getAll(ROUTE_PARAMETER);
@@ -54,25 +73,25 @@ export function normalizedApiUrl(req, appOrigin) {
   const query = url.searchParams.toString();
   return '/api/' + safeSegments(path) + (query ? '?' + query : '');
 }
-function reply(res, status, message) {
+function reply(res: ServerResponse, status: number, message: string) {
   if (res.headersSent) { if (!res.writableEnded) res.end(); return; }
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'" });
   res.end(JSON.stringify({ message }));
 }
 /** One warm-instance pool, no listener, no SQLite fallback, no filesystem or background interval. */
-export function createVercelHandler({ env = process.env, loadApi = () => import('../server/server.mjs'), loadStore = () => import('../server/postgres-store.mjs'), log = console.error, waitUntil = vercelWaitUntil } = {}) {
-  let application;
-  async function initialize(configuration) {
+export function createVercelHandler({ env = process.env, loadApi = () => import('../server/server.ts'), loadStore = () => import('../server/postgres-store.ts'), log = console.error, waitUntil = vercelWaitUntil }: HandlerOptions = {}) {
+  let application: Promise<CloudApplication> | undefined;
+  async function initialize(configuration: ReturnType<typeof cloudConfiguration>) {
     if (!application) application = (async () => {
       const [{ createApi }, { createPostgresStore }] = await Promise.all([loadApi(), loadStore()]);
       const store = await createPostgresStore({ connectionString: configuration.connectionString, sslCa: configuration.sslCa, max: 1 });
       try {
-        return createApi({ store, deploymentMode: 'cloud', seed: false, runMaintenance: false, secureCookies: true, allowedHosts: [configuration.host], allowedOrigins: [configuration.origin], appOrigin: configuration.origin, trustProxy: 'vercel', cronSecret: env.CRON_SECRET, waitUntil });
+        return createApi({ store, deploymentMode: 'cloud', seed: false, runMaintenance: false, secureCookies: true, allowedHosts: [configuration.host], allowedOrigins: [configuration.origin], appOrigin: configuration.origin, trustProxy: true, cronSecret: env.CRON_SECRET, waitUntil });
       } catch (error) { await store.close?.(); throw error; }
     })().catch(error => { application = undefined; throw error; });
     return application;
   }
-  return async function handler(req, res) {
+  return async function handler(req: CloudRequest, res: ServerResponse) {
     try {
       const configuration = cloudConfiguration(env);
       const host = typeof req.headers?.host === 'string' ? req.headers.host.toLowerCase() : '';

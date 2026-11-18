@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { once } from 'node:events';
 import { createApi } from '../server/server.mjs';
-import { createVercelHandler } from '../api/index.mjs';
+import { createVercelHandler } from '../api/index.ts';
 import { partPolicy } from '../server/common.mjs';
 import { createPgFixture } from './helpers/postgres-fixture.mjs';
 import { seedPgDemo } from './helpers/demo-postgres.mjs';

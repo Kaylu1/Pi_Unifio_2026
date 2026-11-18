@@ -19,7 +19,7 @@
         "setup:oscar-supabase": "node scripts/oscar-supabase.mjs setup",
         "build": "ng build && node scripts/verify-csp-build.mjs",
         "watch": "ng build --watch --configuration development",
-        "test": "node --test server/*.test.mjs tests/api*.mjs tests/academic-api*.mjs tests/postgres*.mjs tests/report-sql.test.mjs tests/cloud-flow.integration.mjs tests/admin-sql.test.mjs tests/oscar-supabase-setup.test.mjs tests/vercel-entry.test.mjs",
+        "test": "node --test server/*.test.mjs tests/api*.mjs tests/academic-api*.mjs tests/postgres*.mjs tests/report-sql.test.mjs tests/cloud-flow.integration.mjs tests/admin-sql.test.mjs tests/oscar-supabase-setup.test.mjs tests/vercel*.test.mjs",
         "api": "node scripts/api-local.mjs",
         "test:api": "node --test server/*.test.mjs tests/api*.mjs",
         "verify:local": "node scripts/verify-local.mjs",

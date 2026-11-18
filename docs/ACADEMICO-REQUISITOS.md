@@ -65,6 +65,6 @@ Esses pontos são distintos da presença das funcionalidades e dos arquivos exig
 
 ## Estrutura e disponibilidade da nuvem
 
-A estrutura sugerida é adaptável: `package.json`/`package-lock.json` correspondem ao manifesto do projeto Node; `server/` contém o back-end, `tests/` seus testes, `src/` o Angular e `api/index.mjs` a entrada serverless. Os caminhos `docs/modelo-dados.png`, `docs/documentacao-api.md` e `postman/projeto-integrador.postman_collection.json` existem. O README apresenta a árvore e a correspondência completa.
+A estrutura sugerida é adaptável: `package.json`/`package-lock.json` correspondem ao manifesto do projeto Node; `server/` contém o back-end, `tests/` seus testes, `src/` o Angular e `api/index.ts` a entrada serverless. Os caminhos `docs/modelo-dados.png`, `docs/documentacao-api.md` e `postman/projeto-integrador.postman_collection.json` existem. O README apresenta a árvore e a correspondência completa.
 
 Em 18/11, a página de entrada publicada respondeu 200, mas `/api/health` respondeu 503. Os testes PostgreSQL isolados verificam o código corrigido; a API publicada ainda precisa ser validada após a recuperação do acesso ao projeto Supabase e a atualização autorizada do deploy.
