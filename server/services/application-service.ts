@@ -18,6 +18,7 @@ export interface ApplicationOptions {
   secureCookies?: boolean;
   cronSecret?: string;
   emailTransport?: any;
+  deploymentMode?: 'local' | 'cloud';
 }
 
 export class ApplicationService {
@@ -83,7 +84,7 @@ export class ApplicationService {
       checkCron({ headers }, this.options.cronSecret);
       return { data: { status: 'ok', maintenance: await this.maintenance(), emails: await this.drainEmails() } };
     }
-    if (route === '/health' && method === 'GET') return { data: { status: 'ok', mode: 'local', database: s.dialect } };
+    if (route === '/health' && method === 'GET') return { data: { status: 'ok', mode: this.options.deploymentMode ?? 'local', database: s.dialect } };
     if (route === '/public/services' && method === 'GET') {
       return { data: (await s.list('services')).filter(row => row.active).map(({ id, name, description, price, durationMinutes, purpose }) => ({ id, name, description, price, durationMinutes, purpose })) };
     }

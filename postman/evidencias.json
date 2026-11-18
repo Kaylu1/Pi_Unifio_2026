@@ -1,7 +1,9 @@
 {
-  "capturedAt": "2026-11-11T11:55:54.651Z",
-  "fixtureName": "oscar_test",
-  "database": "mysql",
+  "capturedAt": "2026-11-18T13:30:28.097Z",
+  "fixtureName": "postgres_test",
+  "database": "postgres",
+  "databaseRuntime": "pglite",
+  "executionScope": "local",
   "baseUrl": "http://127.0.0.1:4302/api",
   "passed": true,
   "requests": 87,
@@ -303,7 +305,7 @@
     {
       "name": "Consulta personalizada — agenda do mecânico por data",
       "method": "GET",
-      "endpoint": "/queries/appointments?date=2026-11-18&mechanicId=8",
+      "endpoint": "/queries/appointments?date=2026-11-25&mechanicId=8",
       "expected": 200,
       "actual": 200
     },

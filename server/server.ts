@@ -26,6 +26,22 @@ export interface ApiOptions {
   cronSecret?: string;
   waitUntil?: (promise: Promise<unknown>) => void;
   emailTransport?: any;
+  deploymentMode?: 'local' | 'cloud';
+}
+
+export interface PostgresStartupOptions {
+  connectionString?: string;
+  sslCa?: string;
+}
+type PostgresStoreFactory = (options: PostgresStartupOptions & { max: number }) => Promise<WorkshopRepository>;
+
+/** Valida o projeto dedicado antes de construir qualquer conexão PostgreSQL. */
+export async function createConfiguredPostgresStore(options: PostgresStartupOptions, factory?: PostgresStoreFactory) {
+  const targetModulePath = '../scripts/oscar-supabase-target.mjs';
+  const { assertOscarSupabaseTarget } = await import(targetModulePath);
+  assertOscarSupabaseTarget(options.connectionString);
+  const createStore = factory ?? (await import('./postgres-store.ts')).createPostgresStore;
+  return await createStore({ ...options, max: 1 });
 }
 
 export function createApi(options: ApiOptions = {}) {
@@ -35,7 +51,7 @@ export function createApi(options: ApiOptions = {}) {
   const store: WorkshopRepository = options.store ?? require('./store.ts').createStore({ filename: options.filename, seed: options.seed ?? true });
   const application = new ApplicationService(store, { origin: options.appOrigin ?? allowedOrigins[0],
     secureCookies: options.secureCookies, cronSecret: options.cronSecret ?? process.env.CRON_SECRET,
-    emailTransport: options.emailTransport });
+    emailTransport: options.emailTransport, deploymentMode: options.deploymentMode });
   const controller = new ApiController(application, { allowedHosts, allowedOrigins,
     trustProxy: options.trustProxy, waitUntil: options.waitUntil });
   const server = options.tls ? https.createServer(options.tls, controller.handle) : http.createServer(controller.handle);
@@ -70,10 +86,8 @@ export async function startServer(options: ApiOptions = {}) {
     store = await createMysqlStore({ ...await getLocalMysqlConfig(), importSqlite: resolve(root, 'data/oscar.sqlite') });
   }
   if (!store && process.env.OSCAR_STORAGE === 'postgres') {
-    const targetModulePath = '../scripts/oscar-supabase-target.mjs';
-    const { assertOscarSupabaseTarget } = await import(targetModulePath);
-    assertOscarSupabaseTarget(process.env.DATABASE_URL);
-    throw new Error('Esta execução do OScar utiliza MySQL local. Inicie com npm start.');
+    store = await createConfiguredPostgresStore({ connectionString: process.env.DATABASE_URL,
+      sslCa: process.env.DATABASE_SSL_CA });
   }
   const origin = process.env.OSCAR_ORIGIN ? validOrigin(process.env.OSCAR_ORIGIN, { localOnly: true }) : undefined;
   const api = createApi({ ...options, store, filename: process.env.OSCAR_DB ?? resolve(root, 'data/oscar.sqlite'),

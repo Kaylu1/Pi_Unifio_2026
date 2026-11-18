@@ -4,10 +4,15 @@ import { STATUS_CODES } from 'node:http';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const loopback = new Set(['localhost', '127.0.0.1', '[::1]']);
+const fixtures = {
+  oscar_test: { database: 'mysql', name: 'MySQL Community local', runtime: 'mysql_community' },
+  postgres_test: { database: 'postgres', name: 'PostgreSQL local em PGlite', runtime: 'pglite' },
+};
 const ref = (name, type = 'number') => ({ variable: name, type });
 
 function cpf(seed) {
@@ -85,7 +90,7 @@ function localRequest(url, { method, body, authorization }) {
   });
 }
 
-/** Captura somente em uma API já iniciada com a fixture MySQL oscar_test. */
+/** Captura somente em APIs de teste locais: MySQL oscar_test ou PostgreSQL/PGlite postgres_test. */
 export async function capturePostmanEvidence({
   baseUrl, fixtureName, outputDir = resolve(projectRoot, 'postman'),
   managerEmail = 'gerente@oscar.local', mechanicEmail = 'mecanico@oscar.local',
@@ -94,7 +99,8 @@ export async function capturePostmanEvidence({
   const base = new URL(baseUrl);
   assert(loopback.has(base.hostname), 'As evidências só podem ser capturadas em localhost.');
   assert(['http:', 'https:'].includes(base.protocol), 'Use HTTP ou HTTPS local.');
-  assert.equal(fixtureName, 'oscar_test', 'Execute apenas na fixture MySQL oscar_test.');
+  assert(Object.hasOwn(fixtures, fixtureName), 'Use somente as fixtures locais oscar_test ou postgres_test.');
+  const fixture = fixtures[fixtureName];
   baseUrl = base.href.replace(/\/$/, '');
   const runId = String(Date.now()).slice(-9);
   const variables = {
@@ -133,7 +139,7 @@ export async function capturePostmanEvidence({
       method,
       header: [{ key: 'Accept', value: 'application/json' }, ...(body === undefined ? [] : [{ key: 'Content-Type', value: 'application/json' }])],
       url: '{{baseUrl}}' + endpoint,
-      description: name + '. Executada na fixture MySQL local; o exemplo foi capturado da API.',
+      description: name + '. Executada em ' + fixture.name + ', fixture ' + fixtureName + '; o exemplo foi capturado da API local.',
       ...(body === undefined ? {} : { body: { mode: 'raw', raw: bodyTemplate(body), options: { raw: { language: 'json' } } } }),
       ...(auth === 'manager' ? {} : { auth: auth === 'none' ? { type: 'noauth' } : { type: 'basic', basic: [
         { key: 'username', value: auth === 'mechanic' ? '{{mechanicEmail}}' : '{{managerEmail}}', type: 'string' },
@@ -164,7 +170,7 @@ export async function capturePostmanEvidence({
   const s = step;
   const security = '01 — Acesso e códigos HTTP';
   const health = await s(security, 'Servidor e banco local', 'GET', '/health', undefined, { auth: 'none' });
-  assert.equal(health.database, 'mysql', 'A coleção acadêmica exige a fixture MySQL real.');
+  assert.equal(health.database, fixture.database, 'A API deve utilizar o adaptador de banco da fixture informada.');
   await s(security, 'Sem credenciais retorna 401', 'GET', '/clients', undefined, { auth: 'none', expected: 401 });
   await s(security, 'Senha de teste incorreta retorna 401', 'GET', '/clients', undefined, { auth: 'invalid', expected: 401 });
   await s(security, 'Mecânico não cadastra serviços — 403', 'POST', '/services', { name: 'Operação proibida' }, { auth: 'mechanic', expected: 403 });
@@ -276,8 +282,8 @@ export async function capturePostmanEvidence({
 
   const collection = {
     info: {
-      name: 'OScar — API local da oficina',
-      description: 'Coleção da atividade de backend. Node.js e TypeScript substituem Spring/JPA por autorização informada pelo grupo. Executar em ordem apenas na fixture MySQL oscar_test. Exemplos capturados da API em ' + new Date().toISOString() + '. Pessoas e senhas são fictícias.',
+      name: 'OScar — API da oficina (' + fixture.name + ')',
+      description: 'Coleção da atividade de backend. Node.js e TypeScript substituem Spring/JPA; PostgreSQL/Supabase foi autorizado pelo professor conforme informado pelo grupo. Executar em ordem somente na fixture local ' + fixtureName + ' (' + fixture.name + '). Exemplos capturados da API em ' + new Date().toISOString() + '. Pessoas e senhas são fictícias. Esta execução não comprova testes no Supabase remoto nem na Vercel.',
       schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
     },
     auth: { type: 'basic', basic: [
@@ -301,12 +307,16 @@ export async function capturePostmanEvidence({
   };
   await mkdir(outputDir, { recursive: true });
   await writeFile(resolve(outputDir, 'projeto-integrador.postman_collection.json'), JSON.stringify(collection, null, 2) + '\n');
-  await writeFile(resolve(outputDir, 'evidencias.json'), JSON.stringify({ capturedAt: new Date().toISOString(), fixtureName, database: 'mysql', baseUrl, passed: true, requests: checks.length, checks }, null, 2) + '\n');
+  await writeFile(resolve(outputDir, 'evidencias.json'), JSON.stringify({ capturedAt: new Date().toISOString(), fixtureName,
+    database: fixture.database, databaseRuntime: fixture.runtime, executionScope: 'local',
+    baseUrl, passed: true, requests: checks.length, checks }, null, 2) + '\n');
   console.log('Coleção Postman: ' + checks.length + ' respostas reais capturadas na fixture ' + fixtureName + '.');
-  return { collection, checks };
+  return { collection, checks, context: { fixtureName, database: fixture.database,
+    databaseRuntime: fixture.runtime, executionScope: 'local', remoteDeploymentTested: false } };
 }
 
-export async function verifyPostmanCollection(collection, outputDir = resolve(projectRoot, 'postman')) {
+export async function verifyPostmanCollection(collection, outputDir = resolve(projectRoot, 'postman'), context = {}) {
+  const collectionSha256 = createHash('sha256').update(JSON.stringify(collection, null, 2) + '\n').digest('hex');
   const imported = await import('newman');
   const newman = imported.default ?? imported;
   const summary = await new Promise((resolveRun, reject) => {
@@ -318,6 +328,7 @@ export async function verifyPostmanCollection(collection, outputDir = resolve(pr
   }));
   await writeFile(resolve(outputDir, 'newman-result.json'), JSON.stringify({
     executedAt: new Date().toISOString(), runtime: 'Newman (Postman Collection SDK)',
+    ...context, collectionSha256,
     passed: failures.length === 0, stats: summary.run.stats, failures,
   }, null, 2) + '\n');
   assert.equal(failures.length, 0, 'A reprodução da coleção pelo Newman encontrou falhas.');
@@ -330,11 +341,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (baseUrl) {
     await capturePostmanEvidence({ baseUrl, fixtureName: argument('--fixture') });
   } else {
-    const { createAcademicFixture } = await import('./academic-fixture.mjs');
-    const fixture = await createAcademicFixture({ port: 4302 });
+    const postgres = process.argv.includes('--postgres');
+    const module = await import(postgres ? './academic-postgres-fixture.mjs' : './academic-fixture.mjs');
+    const fixture = await (postgres ? module.createAcademicPostgresFixture : module.createAcademicFixture)({ port: 4302 });
     try {
-      const captured = await capturePostmanEvidence({ baseUrl: fixture.baseUrl, fixtureName: 'oscar_test' });
-      if (process.argv.includes('--verify-postman')) await verifyPostmanCollection(captured.collection);
+      const captured = await capturePostmanEvidence({ baseUrl: fixture.baseUrl, fixtureName: postgres ? 'postgres_test' : 'oscar_test' });
+      if (process.argv.includes('--verify-postman')) await verifyPostmanCollection(captured.collection, undefined, captured.context);
     }
     finally { await fixture.close(); }
   }

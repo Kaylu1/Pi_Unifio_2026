@@ -314,6 +314,59 @@ export async function createPostgresStore({ pool, connectionString, sslCa, max =
             };
             return txContext.getStore() ? operation() : store.transaction(operation);
         },
+        async remove(table: string, id: number): Promise<boolean> {
+            const target = checkTable(table);
+            const recordId = numericId(id);
+            return store.transaction(async () => {
+                const result = await execute('DELETE FROM ' + target + ' WHERE id=$1', [recordId]);
+                return Number(result.rowCount ?? result.affectedRows ?? 0) > 0;
+            });
+        },
+        async appointmentsByDate(date: string, mechanicId: number | null = null): Promise<any[]> {
+            const mechanic = mechanicId === null ? 0 : numericId(mechanicId);
+            const result = await execute(`SELECT a.data, c.data->>'name' AS "clientName",
+                v.data->>'plate' AS "vehiclePlate", u.data->>'name' AS "mechanicName"
+                FROM oscar_private.appointments a
+                JOIN oscar_private.clients c ON c.id=a.clientid
+                JOIN oscar_private.vehicles v ON v.id=a.vehicleid
+                JOIN oscar_private.users u ON u.id=a.mechanicid
+                WHERE a.data->>'date'=$1 AND ($2::bigint=0 OR a.mechanicid=$2)
+                ORDER BY a.data->>'time',a.id`, [date, mechanic]);
+            return result.rows.map((row: any) => ({ ...clone(row.data),
+                clientName: row.clientName, vehiclePlate: row.vehiclePlate, mechanicName: row.mechanicName }));
+        },
+        async lowStockParts(): Promise<any[]> {
+            const settings = await store.settings();
+            const windowDays = settings.consumptionWindowDays ?? 30;
+            const time = now();
+            const start = new Date(Date.parse(time) - windowDays * DAY).toISOString();
+            const historyLimit = new Date(Date.parse(time) - Math.max(30, windowDays) * DAY).toISOString();
+            const result = await execute(`WITH consumption AS (
+                SELECT partid, SUM(CASE WHEN data->>'type'='saida'
+                    THEN (data->>'quantity')::numeric ELSE -(data->>'quantity')::numeric END) AS net
+                FROM oscar_private.movements
+                WHERE data->>'type' IN ('saida','estorno')
+                    AND COALESCE(data->>'date',data->>'createdAt')::timestamptz
+                        BETWEEN $1::timestamptz AND $2::timestamptz
+                GROUP BY partid
+            ), policies AS (
+                SELECT p.id,p.data,
+                    CASE WHEN p.data->>'manualMinimum' IS NOT NULL
+                        THEN CEIL((p.data->>'manualMinimum')::numeric)
+                        WHEN COALESCE(p.data->>'historyStartedAt',p.data->>'createdAt')::timestamptz<=$3::timestamptz
+                        THEN CEIL(ROUND(GREATEST(COALESCE(c.net,0),0)/$4::numeric
+                            *COALESCE((s.data->>'leadDays')::numeric,$5::numeric),12))
+                        ELSE 0 END AS minimum
+                FROM oscar_private.parts p
+                LEFT JOIN oscar_private.suppliers s ON s.id=p.supplierid
+                LEFT JOIN consumption c ON c.partid=p.id
+                WHERE COALESCE((p.data->>'active')::boolean,true)
+            ) SELECT data,minimum FROM policies
+                WHERE (data->>'stock')::numeric<=minimum
+                ORDER BY (data->>'stock')::numeric,id`,
+                [start, time, historyLimit, windowDays, settings.defaultLeadDays ?? 5]);
+            return result.rows.map((row: any) => ({ ...clone(row.data), minimum: Number(row.minimum), lowStock: true }));
+        },
         async settings() {
             const row = (await execute('SELECT data FROM oscar_private.settings WHERE id=1')).rows[0];
             if (!row)

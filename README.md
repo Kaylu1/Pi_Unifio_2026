@@ -2,21 +2,22 @@
 
 Projeto Integrador do curso de Engenharia de Software, desenvolvido para apoiar o gerenciamento de oficinas automotivas. O sistema integra clientes, veículos, agendamentos, ordens de serviço, inspeções, orçamentos, estoque de peças e atendimento de pós-venda.
 
-O objetivo do back-end é disponibilizar uma API REST que coordene o atendimento, aplique as regras da oficina e mantenha a integridade dos registros no MySQL. A interface Angular consome essa API para acompanhar o atendimento desde a solicitação até o encerramento da ordem de serviço.
+O objetivo do back-end é disponibilizar uma API REST que coordene o atendimento, aplique as regras da oficina e mantenha a integridade dos registros. O ambiente de nuvem utiliza **PostgreSQL no Supabase**, com interface Angular e API hospedadas na **Vercel**. O projeto também mantém uma alternativa MySQL local para desenvolvimento e regressão.
 
 ## Adequação tecnológica ao enunciado
 
-Conforme autorização concedida pelo professor ao grupo, a implementação originalmente prevista com **Spring Boot e Spring Data JPA foi adaptada para Node.js e TypeScript**. Os requisitos funcionais, a arquitetura em camadas, o banco MySQL, a autenticação HTTP Basic e as evidências de testes foram mantidos.
+Conforme autorização concedida pelo professor ao grupo, a implementação originalmente prevista com **Spring Boot e Spring Data JPA foi adaptada para Node.js e TypeScript**. O professor também autorizou a substituição de **MySQL por PostgreSQL/Supabase**. Os requisitos funcionais, a arquitetura em camadas, a persistência relacional, a autenticação HTTP Basic e as evidências de testes foram mantidos.
 
 | Responsabilidade prevista no enunciado | Implementação adotada no OScar |
 |---|---|
 | API REST com Spring Boot | Node.js, com os módulos nativos `node:http` e `node:https`, executando o código TypeScript |
-| Persistência e consultas com Spring Data JPA | Repositórios com SQL parametrizado e transações, utilizando o driver **`mysql2`**, pela interface assíncrona `mysql2/promise` |
+| Persistência e consultas com Spring Data JPA | Repositórios com SQL parametrizado e transações, utilizando **`pg` (node-postgres)** no Supabase; `mysql2/promise` atende ao adaptador MySQL local |
+| Persistência com MySQL | PostgreSQL hospedado no Supabase, conforme a autorização acadêmica; MySQL permanece como alternativa local |
 | Bean Validation | Validação no servidor de campos obrigatórios, formatos, limites numéricos e relacionamentos, implementada em `entities.ts`, `common.ts` e nos serviços |
 | Tratamento centralizado de exceções | Classe `DomainError` e tratamento central no `ApiController`, com mensagens e códigos HTTP apropriados |
 | Spring Security com HTTP Basic | Autenticação HTTP Basic no `AuthService` e validações de permissão por perfil nos serviços, por meio de `allow()` em `common.ts` |
 
-O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca `mysql2` é responsável pela comunicação com o MySQL; os mapeamentos e as consultas são definidos nos repositórios do projeto. O Angular permanece responsável pelo front-end.
+O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`** mantém a conexão privada com o PostgreSQL; os mapeamentos e as consultas são definidos nos repositórios. Na Vercel, `api/index.mjs` recebe a requisição e injeta esse repositório nos mesmos serviços TypeScript. O Angular chama `/api` na própria origem.
 
 ## Tecnologias utilizadas
 
@@ -25,7 +26,9 @@ O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca `mysql
 | Node.js 24 | Execução da API e módulos nativos de HTTP, HTTPS e criptografia |
 | TypeScript 5.9 | Implementação do back-end, contratos e modelos; verificação estática em modo estrito |
 | Angular 20 e Angular Material | Interface, formulários, navegação e componentes visuais |
-| MySQL Community 8.4 e `mysql2/promise` | Persistência relacional, chaves estrangeiras, consultas parametrizadas e transações |
+| PostgreSQL/Supabase e `pg` | Persistência do ambiente de nuvem, chaves estrangeiras, consultas parametrizadas e transações |
+| Vercel | Hospedagem do Angular e execução da API como função serverless |
+| MySQL Community 8.4 e `mysql2/promise` | Alternativa local com dados e configuração próprios |
 | Postman Collection v2.1 e Newman | Organização das requisições, exemplos de respostas e reprodução da coleção |
 | Node.js Test Runner e Playwright | Testes de domínio, integração e interface |
 
@@ -39,7 +42,19 @@ O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca `mysql
 | Luis Felipi Ferreira | 273194 |
 | Lucas Henrique Benitez de Moraes | 272807 |
 
-## Configuração e execução local
+## Ambientes de execução
+
+| Ambiente | Acesso | Persistência |
+|---|---|---|
+| Implantação Vercel | `https://pi-unifio-2026.vercel.app` | PostgreSQL/Supabase, schema `oscar_private` |
+| Execução local padrão | `https://localhost:4201` | MySQL local, schema `oscar_local` |
+| Teste isolado PostgreSQL | API local iniciada pelo executor | PostgreSQL local PGlite, com as migrações do Supabase |
+
+A configuração da implantação está documentada em [Vercel](docs/VERCEL.md) e [Supabase](docs/SUPABASE.md). Credenciais SQL e variáveis privadas pertencem ao servidor. Os bancos de desenvolvimento e teste não são sincronizados automaticamente com a base de nuvem.
+
+Em **18/11/2026**, a página de entrada da Vercel respondeu `200`, e o endpoint `/api/health` respondeu `503`. Portanto, a disponibilidade atual da API publicada ainda depende da conferência do projeto Supabase e da configuração do ambiente. Os testes locais não são apresentados como prova de funcionamento do deploy.
+
+## Configuração e execução local com MySQL
 
 O preparo automatizado foi desenvolvido para Windows com Node.js 24. O MySQL Community 8.4 é executado em `127.0.0.1:3307`, com diretório de dados exclusivo do OScar. No diretório raiz do projeto, execute:
 
@@ -57,13 +72,13 @@ Para conferir o banco:
 node scripts/mysql-local.mjs status
 ~~~
 
-Os dados da oficina ficam no schema **oscar_local**. Testes e evidências usam **oscar_test**. A configuração e os arquivos do servidor MySQL ficam em data/mysql-local; as senhas do banco permanecem nessa pasta local e não entram na coleção Postman.
+Nessa alternativa MySQL, os dados da oficina ficam no schema **oscar_local**, e os testes usam **oscar_test**. A configuração e os arquivos do servidor MySQL ficam em data/mysql-local; as senhas do banco permanecem nessa pasta local e não entram na coleção Postman.
 
-A execução é limitada ao computador. As instruções antigas de Supabase e Vercel em docs são histórico de outra etapa e não são necessárias para esta entrega.
+Essa execução utiliza o computador local. Para iniciar o Angular/API local com o banco Supabase, consulte `npm.cmd run start:oscar-supabase` e as condições descritas no [guia do Supabase](docs/SUPABASE.md).
 
 ## Autenticação e contas de demonstração
 
-As contas da base demonstrativa inicial utilizam a senha **Oscar@2026!**. Essas credenciais são destinadas exclusivamente aos testes e à apresentação.
+As contas da base demonstrativa local e das fixtures de teste utilizam a senha **Oscar@2026!**. Essas credenciais são destinadas exclusivamente aos testes e à apresentação. Os usuários cadastrados no Supabase pertencem àquele ambiente e não são substituídos por essas contas locais.
 
 | Perfil | E-mail |
 |---|---|
@@ -77,6 +92,37 @@ A interface usa sessão em cookie HttpOnly e proteção CSRF. A mesma API també
 
 ## Organização do código
 
+O enunciado permite adaptar a estrutura do repositório. A organização corresponde às responsabilidades recomendadas:
+
+| Estrutura recomendada no enunciado Java | Estrutura adotada em Node.js/Angular |
+|---|---|
+| `pom.xml` | `package.json` e `package-lock.json`: dependências e comandos |
+| `src/main/` | `server/`: API e regras; `src/`: interface Angular; `api/`: entrada da Vercel |
+| `src/test/` | `tests/` e `server/*.test.mjs`: testes automatizados |
+| `docs/modelo-dados.png` | Mesmo caminho, com o modelo PostgreSQL/Supabase |
+| `docs/documentacao-api.md` | Mesmo caminho, com índice e referência detalhada dos endpoints |
+| `postman/projeto-integrador.postman_collection.json` | Mesmo caminho, com variáveis e respostas de teste |
+
+~~~text
+oscar/
+├── README.md
+├── package.json
+├── package-lock.json
+├── vercel.json
+├── api/index.mjs
+├── docs/
+│   ├── modelo-dados.png
+│   └── documentacao-api.md
+├── postman/projeto-integrador.postman_collection.json
+├── server/
+│   ├── controllers/
+│   ├── services/
+│   └── repositories/
+├── src/                         interface Angular
+├── supabase/migrations/         estrutura PostgreSQL
+└── tests/
+~~~
+
 O Angular continua responsável pela interface. O backend em TypeScript separa as responsabilidades:
 
 ~~~text
@@ -85,6 +131,7 @@ server/
   services/application-service.ts     encaminhamento dos casos de uso
   services/crud-service.ts            gerenciamento e integridade dos registros
   services/auth-service.ts            credenciais, HTTP Basic e sessões
+  postgres-store.ts                   repositório PostgreSQL/Supabase
   repositories/mysql-repository.ts    comandos e transações no MySQL
   repositories/mysql-schema.sql       tabelas, índices, checks e chaves estrangeiras
   repositories/security-repository.ts persistência de credenciais, sessões e recuperação
@@ -94,13 +141,15 @@ server/
   entities.ts                        validação dos cadastros
 ~~~
 
-O controller chama os serviços; a autenticação é tratada pelo AuthService, e os serviços usam o contrato do repositório. Validação de entrada, conflitos e recursos inexistentes passam pelo tratamento central de erros. Os módulos mantidos para SQLite atendem à regressão local; a persistência da entrega acadêmica é MySQL.
+O controller chama os serviços; a autenticação é tratada pelo AuthService, e os serviços usam o contrato do repositório. Validação de entrada, conflitos e recursos inexistentes passam pelo tratamento central de erros. PostgreSQL, MySQL e SQLite possuem adaptadores próprios; a configuração da Vercel seleciona PostgreSQL explicitamente.
 
 ## Modelagem e regras da oficina
 
-O banco tem doze entidades de domínio: clientes, veículos, usuários, serviços, fornecedores, peças, solicitações, agendamentos, ordens, orçamentos, movimentações e chamados. Duas tabelas associativas registram os serviços de cada agendamento e os itens das ordens.
+O modelo tem doze entidades de domínio: clientes, veículos, usuários, serviços, fornecedores, peças, solicitações, agendamentos, ordens, orçamentos, movimentações e chamados. No PostgreSQL, os componentes do atendimento são armazenados em JSONB, e os vínculos físicos entre entidades utilizam colunas com chaves estrangeiras. A migração contém 21 tabelas, incluindo nove de suporte.
 
-[Diagrama de dados](docs/modelo-dados.svg) · [Imagem PNG](docs/modelo-dados.png) · [Fonte Mermaid](docs/modelo-dados.mmd) · [Estrutura SQL](server/repositories/mysql-schema.sql)
+[Diagrama PostgreSQL](docs/modelo-dados.svg) · [Imagem PNG](docs/modelo-dados.png) · [Fonte Mermaid](docs/modelo-dados.mmd) · [Migração PostgreSQL](supabase/migrations/202610220001_oscar_private.sql)
+
+O adaptador MySQL possui organização física própria, incluindo duas tabelas associativas. Sua documentação permanece disponível em [modelo MySQL](docs/modelo-dados-mysql.svg) e [estrutura SQL MySQL](server/repositories/mysql-schema.sql).
 
 As colunas usadas em relacionamentos e consultas são relacionais. Campos JSON preservam detalhes e retratos históricos, como itens aprovados, inspeções e evolução do atendimento. Alterar o preço no catálogo não reescreve o valor já aprovado em uma O.S.
 
@@ -116,38 +165,39 @@ As consultas personalizadas consultam a agenda por data e mecânico e as peças 
 
 ## Atendimento aos requisitos e documentação da API
 
-[Documentação dos endpoints](docs/ACADEMICO-API.md) · [Requisitos da atividade](docs/ACADEMICO-REQUISITOS.md) · [Roteiro para apresentar](docs/ACADEMICO-APRESENTACAO.md)
+[Documentação da API](docs/documentacao-api.md) · [Requisitos da atividade](docs/ACADEMICO-REQUISITOS.md) · [Roteiro para apresentar](docs/ACADEMICO-APRESENTACAO.md)
 
 A [matriz de requisitos](docs/ACADEMICO-REQUISITOS.md) relaciona cada critério do enunciado à implementação e à evidência correspondente. Ela também distingue os requisitos técnicos verificados das etapas formais de apresentação e entrega.
 
 A coleção fica em **postman/projeto-integrador.postman_collection.json**. Ela inclui autenticação, CRUD das entidades, consultas, regras, validação, erros 400/404/409/401/403 e o fluxo de aprovação e execução da oficina. As variáveis têm seus valores incluídos no JSON; as credenciais são somente de teste.
 
-As respostas salvas são capturadas de uma fixture MySQL local, sem usar o banco principal. A forma de gerar e importar as evidências está em [postman/README.md](postman/README.md). Após importar no Postman, use **Examples** para examinar as respostas e **Save Response → Save as example** para renovar uma evidência manualmente.
+As respostas de teste são capturadas em bases isoladas, com o adaptador utilizado identificado no registro de cada execução. A captura PostgreSQL aplica as migrações do Supabase em PGlite local; ela não modifica a base hospedada. A forma de gerar e importar as evidências está em [postman/README.md](postman/README.md). Após importar no Postman, use **Examples** para examinar as respostas e **Save Response → Save as example** para renovar uma evidência manualmente.
 
 ~~~powershell
-node scripts/postman-evidence.mjs
-node scripts/academic-fixture.mjs
+npm.cmd run postman:postgres
+node scripts/academic-postgres-fixture.mjs
 ~~~
 
-O primeiro comando captura as respostas e encerra a fixture. O segundo a reabre em **http://127.0.0.1:4302/api** para enviar as requisições pelo Postman. Eles usam apenas oscar_test e não devem rodar ao mesmo tempo.
+O primeiro comando captura as respostas e encerra a fixture. O segundo a reabre em **http://127.0.0.1:4302/api** para enviar as requisições pelo Postman. Os comandos não devem rodar ao mesmo tempo. A alternativa MySQL continua disponível por `npm.cmd run postman:evidence`.
 
 ## Verificação do projeto
 
 ~~~powershell
 npm.cmd run typecheck
 npm.cmd test
+npm.cmd run test:postgres
 npm.cmd run test:mysql
 npm.cmd run build
-npm.cmd run test:browser:mysql
+npm.cmd run test:browser:postgres
 ~~~
 
-Os testes utilizam dados isolados. A suíte `test:browser:mysql` verifica o fluxo Angular → API TypeScript → MySQL. A suíte adicional `test:browser` utiliza SQLite para regressão. As evidências da coleção estão em `postman/evidencias.json`; os cenários de navegador abrangem catálogo, confirmação, agenda, inspeção, orçamento público, estoque, encerramento e permissões.
+Os testes utilizam dados isolados. A suíte `test:browser:postgres` verifica o fluxo Angular → API TypeScript → PostgreSQL local. `test:browser:mysql` verifica a alternativa MySQL real; `test:browser` utiliza SQLite para regressão. As evidências da coleção estão em `postman/evidencias.json`; os cenários abrangem catálogo, confirmação, agenda, inspeção, orçamento público, estoque, encerramento e permissões.
 
-A captura de 11/11/2026 gravou **87 respostas reais**. A mesma coleção foi executada pelo Newman, com **87 requisições e 87 verificações aprovadas**, sem falha. Veja [o registro dessa execução](docs/ACADEMICO-VALIDACAO.md).
+A coleção principal foi capturada em **18/11/2026** usando PostgreSQL local isolado, com **87 respostas reais**. Sua reprodução pelo Newman aprovou **87 requisições e 87 verificações**, sem falhas. As evidências anteriores de MySQL permanecem em [postman/mysql-2026-11-11](postman/mysql-2026-11-11/README.md). Veja [o relatório de validação](docs/ACADEMICO-VALIDACAO.md).
 
-Na conferência de **18/11/2026**, a verificação estrita do TypeScript, os **148 testes gerais**, os **10 testes em MySQL real** e o build do Angular foram aprovados. As evidências históricas e os pontos formais de apresentação estão discriminados na [matriz de requisitos](docs/ACADEMICO-REQUISITOS.md).
+Na conferência de **18/11/2026**, passaram a verificação estrita do TypeScript, **158 testes gerais**, **10 testes em MySQL real** e **cinco suítes de navegador com PostgreSQL local**. O build do Angular foi aprovado, com aviso de tamanho do pacote inicial. Os ambientes e os pontos formais de apresentação estão discriminados na [matriz de requisitos](docs/ACADEMICO-REQUISITOS.md).
 
-Na execução local, as mensagens de e-mail ficam disponíveis na caixa do gerente. A demonstração utiliza o MySQL do próprio computador.
+Na execução local, as mensagens de e-mail ficam disponíveis na caixa do gerente. Os testes isolados dispensam envio de mensagens e acesso ao banco de produção.
 
 ## Entrega acadêmica
 

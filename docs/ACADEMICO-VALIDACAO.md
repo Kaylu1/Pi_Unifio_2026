@@ -1,4 +1,6 @@
-# Validação local da atividade
+# Verificação da aplicação e da implantação
+
+## Histórico MySQL — 11/11/2026
 
 Execução local em **11/11/2026**, usando MySQL Community 8.4 na fixture **oscar_test**. A API de teste respondeu em **http://127.0.0.1:4302/api**. O banco oscar_local não foi usado na captura.
 
@@ -15,9 +17,9 @@ A captura exercitou o CRUD das doze entidades, duas consultas personalizadas, co
 
 Os arquivos verificáveis estão em:
 
-- [Coleção com exemplos reais](../postman/projeto-integrador.postman_collection.json)
-- [Status esperado e recebido de cada requisição](../postman/evidencias.json)
-- [Resumo da execução Newman](../postman/newman-result.json)
+- [Coleção MySQL com exemplos reais](../postman/mysql-2026-11-11/projeto-integrador.postman_collection.json)
+- [Status esperado e recebido de cada requisição MySQL](../postman/mysql-2026-11-11/evidencias.json)
+- [Resumo da execução Newman/MySQL](../postman/mysql-2026-11-11/newman-result.json)
 - [Executor de captura](../scripts/postman-evidence.mjs)
 
 O comando usado foi:
@@ -48,9 +50,9 @@ No navegador, o caminho foi Angular → API TypeScript → MySQL oscar_test. For
 
 O build ainda emite um aviso de tamanho: pacote inicial de aproximadamente 1,47 MB frente ao limite de aviso de 1,30 MB. A compilação passa. O audit completo mantém 16 avisos moderados em dependências de desenvolvimento da CLI do Angular; a correção automática oferecida exige troca de versão principal da CLI. As dependências de execução não apresentaram avisos na consulta registrada.
 
-## Nova conferência em 18/11/2026
+## Primeira conferência em 18/11/2026 — execução local MySQL
 
-O código foi comparado novamente com o enunciado fornecido pelo grupo, considerando a substituição autorizada de Spring Boot e JPA por Node.js e TypeScript.
+O código foi inicialmente comparado com o enunciado considerando a execução local MySQL e a substituição de Spring Boot/JPA por Node.js/TypeScript. O grupo esclareceu posteriormente que PostgreSQL/Supabase também havia sido autorizado; a conferência correspondente está registrada a seguir.
 
 | Comando executado nesta conferência | Resultado |
 |---|---|
@@ -61,6 +63,37 @@ O código foi comparado novamente com o enunciado fornecido pelo grupo, consider
 
 Os testes de MySQL utilizaram exclusivamente `oscar_test`. O README foi revisado para identificar os módulos nativos HTTP/HTTPS do Node.js, o driver `mysql2/promise`, as equivalências tecnológicas e os comandos de verificação com MySQL.
 
-A coleção existente foi inspecionada: 87 requisições, 87 exemplos de respostas e 28 variáveis com valores incluídos. A execução do Newman e as cinco suítes de navegador descritas anteriormente permanecem como evidências de **11/11/2026**; não foram repetidas nesta conferência. O audit de dependências também não foi repetido.
+A coleção MySQL existente foi inspecionada nessa etapa inicial: 87 requisições, 87 exemplos de respostas e 28 variáveis. Os resultados MySQL de Newman e navegador descritos anteriormente são de **11/11/2026**. O audit de dependências não foi repetido em 18/11.
 
 As ressalvas de procedência do projeto-base, uso manual de Save Response e entrega acadêmica estão descritas na [matriz de requisitos](ACADEMICO-REQUISITOS.md).
+
+## Conferência PostgreSQL e Vercel — 18/11/2026
+
+O grupo confirmou a autorização do professor para utilizar PostgreSQL/Supabase. A análise identificou três exclusões sem implementação no adaptador PostgreSQL: rascunhos de orçamento, entradas de estoque e chamados elegíveis. O repositório recebeu `remove()` transacional e consultas SQL de agenda e reposição com a mesma política de estoque aplicada pelos serviços. O iniciador PostgreSQL local também foi restabelecido, e `/health` passou a distinguir o ambiente do driver utilizado.
+
+| Verificação após as correções | Resultado |
+|---|---|
+| TypeScript estrito | Sem erros |
+| Suíte geral, incluindo integração do adaptador Vercel | 158 testes aprovados, zero falhas |
+| Coleção principal em PostgreSQL local/PGlite | 87 requisições, 87 respostas reais e 28 variáveis preenchidas |
+| Reprodução da coleção PostgreSQL pelo Newman CLI | 87 requisições e 87 verificações aprovadas |
+| Navegador com Angular → API → PostgreSQL local | Cinco suítes aprovadas: flow, request, access, features e model |
+| Estrutura recomendada | README, manifesto Node, modelo PNG, documentação da API, coleção e diretórios de código/testes presentes |
+
+Comandos utilizados nesta etapa:
+
+~~~powershell
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run test:browser:postgres -- flow request access features model
+~~~
+
+A captura foi realizada com `scripts/academic-postgres-fixture.mjs` e `scripts/postman-evidence.mjs`. O Newman foi executado pelo cache temporário do npm, sem adicioná-lo às dependências do aplicativo. [Evidências da captura](../postman/evidencias.json) e [resumo Newman](../postman/newman-result.json) identificam PostgreSQL/PGlite local e o hash da coleção correspondente.
+
+### Limite da verificação da implantação
+
+Na observação pública de 18/11, `https://pi-unifio-2026.vercel.app/entrar` respondeu **200**, e `/api/health` respondeu **503** com mensagem genérica de indisponibilidade da API. Os status públicos do GitHub indicavam que o deploy do commit `dc40340` havia concluído, o que comprova a publicação, mas não a saúde da conexão ao banco.
+
+A tentativa SQL direta ao projeto Supabase esperado, restrita a leitura, foi recusada com código `XX000`. O hostname público do projeto também não foi resolvido nessa rede. Esses sinais não comprovam uma causa única. A verificação do status do projeto no painel foi solicitada ao usuário.
+
+As correções e os testes desta etapa foram realizados localmente. Não houve aplicação de migração, alteração de variáveis, escrita no Supabase de produção ou novo deploy. O resultado PostgreSQL local não é apresentado como prova de recuperação da API publicada.

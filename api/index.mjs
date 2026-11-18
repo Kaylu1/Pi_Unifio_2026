@@ -67,7 +67,7 @@ export function createVercelHandler({ env = process.env, loadApi = () => import(
       const [{ createApi }, { createPostgresStore }] = await Promise.all([loadApi(), loadStore()]);
       const store = await createPostgresStore({ connectionString: configuration.connectionString, sslCa: configuration.sslCa, max: 1 });
       try {
-        return createApi({ store, seed: false, runMaintenance: false, secureCookies: true, allowedHosts: [configuration.host], allowedOrigins: [configuration.origin], appOrigin: configuration.origin, trustProxy: 'vercel', cronSecret: env.CRON_SECRET, waitUntil });
+        return createApi({ store, deploymentMode: 'cloud', seed: false, runMaintenance: false, secureCookies: true, allowedHosts: [configuration.host], allowedOrigins: [configuration.origin], appOrigin: configuration.origin, trustProxy: 'vercel', cronSecret: env.CRON_SECRET, waitUntil });
       } catch (error) { await store.close?.(); throw error; }
     })().catch(error => { application = undefined; throw error; });
     return application;

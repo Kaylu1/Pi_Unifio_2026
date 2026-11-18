@@ -6,14 +6,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generate } from 'selfsigned';
 import { createAcademicFixture } from './academic-fixture.mjs';
+import { createAcademicPostgresFixture } from './academic-postgres-fixture.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const suites=process.argv.slice(2);
+const postgresMode=process.argv.includes('--postgres');
+const database=postgresMode?'postgres':'mysql';
+const suites=process.argv.slice(2).filter(argument=>!['--postgres','--mysql'].includes(argument));
 if(suites.some(name=>!['flow','features','access','theme','layouts','model','request'].includes(name)))throw new Error('Suíte de navegador desconhecida.');
 if(!suites.length)suites.push('flow','request','access');
-const port=Number(process.env.OSCAR_TEST_FRONTEND_PORT||4213);
+const port=Number(process.env.OSCAR_TEST_FRONTEND_PORT||(postgresMode?4214:4213));
 const base='https://localhost:'+port;
-const directory=path.join(root,'data','test-runs','mysql-browser-'+Date.now());
+const directory=path.join(root,'data','test-runs',database+'-browser-'+Date.now());
 await mkdir(directory,{recursive:true});
 const certificate=path.join(root,'data','tls','localhost.crt');
 const privateKey=path.join(root,'data','tls','localhost.key');
@@ -23,7 +26,7 @@ if(!existsSync(certificate)||!existsSync(privateKey)){
   extensions:[{name:'subjectAltName',altNames:[{type:2,value:'localhost'},{type:7,ip:'127.0.0.1'}]}]});
  await writeFile(certificate,pem.cert);await writeFile(privateKey,pem.private,{mode:0o600});
 }
-const fixture=await createAcademicFixture({origin:base});
+const fixture=await (postgresMode?createAcademicPostgresFixture({origin:base}):createAcademicFixture({origin:base}));
 const proxy=path.join(directory,'proxy.json');
 await writeFile(proxy,JSON.stringify({'/api':{target:new URL(fixture.baseUrl).origin,secure:false,changeOrigin:false}},null,2));
 const log=createWriteStream(path.join(directory,'servers.log'));
@@ -49,9 +52,9 @@ try{
   if(code!==0)throw new Error('Falha na suíte '+suite+'.');
  }
  passed=true;
- console.log('PASS: Angular e API TypeScript verificados em MySQL real, banco oscar_test.');
+ console.log(postgresMode?'PASS: Angular e API TypeScript verificados com PostgreSQL local isolado (PGlite).':'PASS: Angular e API TypeScript verificados em MySQL real, banco oscar_test.');
 }finally{
  if(frontend.pid){if(process.platform==='win32')spawnSync('taskkill.exe',['/PID',String(frontend.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});else frontend.kill('SIGTERM');}
  log.end();await fixture.close();
- await writeFile(path.join(directory,'summary.json'),JSON.stringify({passed,base,suites,database:'mysql',mainDatabaseUntouched:true},null,2));
+ await writeFile(path.join(directory,'summary.json'),JSON.stringify({passed,base,suites,database,mainDatabaseUntouched:true},null,2));
 }

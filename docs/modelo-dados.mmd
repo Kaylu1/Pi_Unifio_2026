@@ -1,129 +1,96 @@
+%% Modelo físico das 12 entidades de domínio do schema oscar_private.
+%% Fonte: supabase/migrations/202610220001_oscar_private.sql e
+%% docs/SQL_PARA_APLICAR_DEPOIS.txt (service_requests).
+%% As linhas abaixo representam somente chaves estrangeiras reais.
+%% serviceIds, itens de O.S., inspeções e vínculos das solicitações são
+%% componentes do campo data JSONB; não são tabelas associativas neste schema.
 erDiagram
-  clients ||--o{ vehicles : possui
-  clients |o--o{ users : acesso_do_cliente
-  clients |o--o{ service_requests : identifica
-  clients ||--o{ appointments : agenda
-  clients ||--o{ orders : solicita
-  clients ||--o{ tickets : abre
-  vehicles |o--o{ service_requests : identifica
-  vehicles ||--o{ appointments : reservado
-  vehicles ||--o{ orders : atendido
-  users ||--o{ appointments : mecanico
-  users ||--o{ orders : responsavel
-  users |o--o{ movements : registra
-  service_requests |o--o{ appointments : confirmado
-  appointments ||--o{ appointment_services : inclui
-  services ||--o{ appointment_services : compoe
-  appointments |o--o{ orders : origina
-  orders |o--o{ orders : retorno_garantia
-  orders ||--o{ order_items : possui
-  services |o--o{ order_items : servico
-  parts |o--o{ order_items : peca
-  orders ||--o{ budgets : recebe
-  orders |o--o{ movements : consumo
-  orders ||--o{ tickets : pos_venda
-  suppliers |o--o{ parts : fornece
-  suppliers |o--o{ movements : entrega
-  parts ||--o{ movements : movimenta
+  clients ||--o{ vehicles : clientid
+  clients |o--o{ users : clientid_opcional
+  suppliers |o--o{ parts : supplierid_opcional
+  clients ||--o{ appointments : clientid
+  vehicles ||--o{ appointments : vehicleid
+  users ||--o{ appointments : mechanicid
+  clients ||--o{ orders : clientid
+  vehicles ||--o{ orders : vehicleid
+  users ||--o{ orders : mechanicid
+  appointments |o--o{ orders : appointmentid_opcional
+  orders |o--o{ orders : originorderid_opcional
+  orders ||--o{ budgets : orderid
+  parts ||--o{ movements : partid
+  orders |o--o{ movements : orderid_opcional
+  suppliers |o--o{ movements : supplierid_opcional
+  orders ||--o{ tickets : orderid
+  clients ||--o{ tickets : clientid
   clients {
-    int id PK
-    string name
-    string cpf UK
-    string phone
-    string email
-    boolean active
+    bigint id PK
+    jsonb data "nome, CPF, telefone, email e demais dados"
   }
   vehicles {
-    int id PK
-    int clientId FK
-    string plate UK
-    string chassis UK
-    string model
+    bigint id PK
+    bigint clientid FK
+    jsonb data "placa, chassi, marca e modelo"
   }
   users {
-    int id PK
-    int clientId FK
-    string email UK
-    string passwordHash
-    string role
+    bigint id PK
+    bigint clientid FK "opcional"
+    text email UK
+    text passwordhash
+    jsonb data "nome, perfil e situacao"
   }
   services {
-    int id PK
-    string name
-    decimal price
-    int durationMinutes
-    string purpose
+    bigint id PK
+    jsonb data "nome, preco, duracao e itens de inspecao"
   }
   suppliers {
-    int id PK
-    string name
-    string cnpj UK
-    int leadDays
+    bigint id PK
+    jsonb data "nome, CNPJ, contato e prazo"
   }
   parts {
-    int id PK
-    int supplierId FK
-    string code UK
-    decimal stock
-    decimal manualMinimum
-  }
-  service_requests {
-    int id PK
-    int clientId FK
-    int vehicleId FK
-    string name
-    string status
+    bigint id PK
+    bigint supplierid FK "opcional"
+    jsonb data "codigo, valores, saldo e minimo"
   }
   appointments {
-    int id PK
-    int clientId FK
-    int vehicleId FK
-    int mechanicId FK
-    int serviceRequestId FK
-    date date
-    string time
-  }
-  appointment_services {
-    int appointmentId PK, FK
-    int serviceId PK, FK
+    bigint id PK
+    bigint clientid FK
+    bigint vehicleid FK
+    bigint mechanicid FK
+    jsonb data "data, horario e snapshot dos servicos"
   }
   orders {
-    int id PK
-    int clientId FK
-    int vehicleId FK
-    int mechanicId FK
-    int appointmentId FK
-    int originOrderId FK
-    string status
-  }
-  order_items {
-    int orderId PK, FK
-    string itemId PK
-    string section PK
-    int serviceId FK
-    int partId FK
-    decimal quantity
-    decimal price
-    string decision
+    bigint id PK
+    bigint clientid FK
+    bigint vehicleid FK
+    bigint mechanicid FK
+    bigint appointmentid FK "opcional"
+    bigint originorderid FK "opcional, autorrelacionamento"
+    jsonb data "itens, inspecoes e historico"
   }
   budgets {
-    int id PK
-    int orderId FK
-    int number UK
-    string status
+    bigint id PK
+    bigint orderid FK
+    jsonb data "itens, validade e decisoes"
   }
   movements {
-    int id PK
-    int partId FK
-    int orderId FK
-    int supplierId FK
-    int userId FK
-    string type
-    decimal quantity
+    bigint id PK
+    bigint partid FK
+    bigint orderid FK "opcional"
+    bigint supplierid FK "opcional"
+    jsonb data "tipo, quantidade, data e autoria"
   }
   tickets {
-    int id PK
-    int orderId FK
-    int clientId FK
-    string status
+    bigint id PK
+    bigint orderid FK
+    bigint clientid FK
+    jsonb data "descricao, situacao e analise"
   }
+  service_requests {
+    bigint id PK
+    jsonb data "contato, veiculo, servicos e vinculos confirmados"
+  }
+
+%% Tabelas de suporte (fora do recorte do diagrama): emails, audit, settings,
+%% sessions, reset_tokens, rate_limits, backups, privacy_tombstones,
+%% service_request_tombstones. O schema completo possui 21 tabelas.
+%% sessions.userid e reset_tokens.userid possuem FK para users.id.

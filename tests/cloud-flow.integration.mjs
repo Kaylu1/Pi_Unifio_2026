@@ -54,7 +54,7 @@ test('HTTP serverless + PostgreSQL local: aprovação, concorrência, estoque, p
     assert.match(result.headers['set-cookie'][0], /Secure/);
     return { ...result.data, cookie: result.headers['set-cookie'][0].split(';')[0] };
   }
-  const health = await ok('/health'); assert.equal(health.database, 'postgres');
+  const health = await ok('/health'); assert.equal(health.database, 'postgres'); assert.equal(health.mode, 'cloud');
   assert.equal((await request('/bootstrap')).status, 401);
   const manager = await login();
   let order, partItem, stock;
