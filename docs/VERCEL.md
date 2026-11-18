@@ -74,6 +74,8 @@ A configuração versionada e os testes locais não comprovam, por si só, que u
 | Usuário autenticado sem permissão | HTTP 403 |
 | Catálogo e fluxo autenticado | Respostas coerentes com os registros do ambiente correto |
 
-Na observação somente de leitura de **18/11/2026**, `/entrar` respondeu **200**, mas `/api/health` respondeu **503**. A causa ainda não foi estabelecida. A conferência também recebeu o código **XX000** em uma tentativa de consulta SQL somente de leitura.
+Na conferência de **18/11/2026**, `/entrar` respondeu **200**, mas `/api/health` respondeu **503**. Após a reativação do Supabase, as conexões verificadas por TLS nas portas **5432** e **6543** funcionaram. O adaptador real da Vercel, executado localmente com o Supabase e a configuração privada preparada, respondeu **200** em `/api/health`, com `mode: cloud` e `database: postgres`. Essa comparação usou uma transação **READ ONLY**, encerrada com `ROLLBACK`.
 
-Esse resultado permite confirmar a entrega da interface, mas mantém a API de nuvem como **indisponível na observação registrada**. Antes de apresentar esse endereço, confira o estado do projeto Supabase, as credenciais/host/porta do pooler e as variáveis do ambiente da Vercel. Nenhuma alteração remota de dados, migração ou nova implantação foi executada por esta conferência.
+No endereço publicado, `/api/a.b` respondeu **400** e uma requisição com origem externa respondeu **403**. Esses resultados mostram que a validação básica de configuração e o roteamento da função passaram; o **503** permanece na etapa de inicialização. Ainda não foi possível distinguir uma diferença nas variáveis efetivamente implantadas, uma falha de conexão a partir da Vercel ou um problema no carregamento dos módulos publicados.
+
+A API de nuvem permanece **indisponível na observação registrada**. Os próximos dados necessários são a configuração e os registros de execução do projeto na conta Vercel do proprietário. O teste local não confirma que o ambiente publicado utiliza os mesmos valores ou o mesmo código. Nenhuma alteração remota de dados, migração ou nova implantação foi executada por esta conferência.

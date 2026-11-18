@@ -61,6 +61,8 @@ A orientação para a função de nuvem e suas variáveis está em [VERCEL.md](V
 
 ## Estado observado em 18/11/2026
 
-Na conferência somente de leitura, a página pública `/entrar` respondeu **HTTP 200**, enquanto `/api/health` respondeu **HTTP 503** com mensagem genérica de indisponibilidade. Uma consulta SQL somente de leitura também retornou o código PostgreSQL **XX000**.
+Uma tentativa inicial retornou o código PostgreSQL **XX000**. Após o usuário informar a reativação do projeto, as conexões ao pooler nas portas **5432** e **6543** funcionaram com verificação TLS. Consultas somente de leitura confirmaram PostgreSQL **17.11**, as **21 tabelas** de `oscar_private` e a presença de `settings` e `users`.
 
-Essas observações não identificam, isoladamente, a causa da indisponibilidade. É necessário conferir o estado do projeto no Supabase, os parâmetros da conexão privada e as variáveis do ambiente correspondente na Vercel antes de validar a apresentação em nuvem. Esta conferência não aplicou migrações nem alterou dados remotos.
+O adaptador real `api/index.mjs`, executado localmente com as variáveis privadas preparadas para a Vercel e esse Supabase, respondeu **HTTP 200** em `/api/health`, com `mode: cloud` e `database: postgres`. O teste manteve a conexão dentro de uma transação **READ ONLY**, encerrada com `ROLLBACK`.
+
+A API publicada continuou respondendo **HTTP 503**. Assim, a conexão local com o Supabase está comprovada, mas a inicialização na Vercel ainda requer diagnóstico do ambiente efetivamente implantado. Esta conferência não aplicou migrações nem alterou dados remotos.

@@ -52,7 +52,7 @@ O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`
 
 A configuração da implantação está documentada em [Vercel](docs/VERCEL.md) e [Supabase](docs/SUPABASE.md). Credenciais SQL e variáveis privadas pertencem ao servidor. Os bancos de desenvolvimento e teste não são sincronizados automaticamente com a base de nuvem.
 
-Em **18/11/2026**, a página de entrada da Vercel respondeu `200`, e o endpoint `/api/health` respondeu `503`. Portanto, a disponibilidade atual da API publicada ainda depende da conferência do projeto Supabase e da configuração do ambiente. Os testes locais não são apresentados como prova de funcionamento do deploy.
+Em **18/11/2026**, após a reativação do Supabase, as conexões verificadas por TLS nas portas `5432` e `6543` funcionaram. O adaptador da Vercel executado localmente com esse banco respondeu `200` em `/api/health`, dentro de uma transação somente de leitura. A página publicada respondeu `200`, mas a API publicada continuou com `503`; a inicialização no ambiente da Vercel ainda precisa ser diagnosticada. A execução local não comprova funcionamento do deploy.
 
 ## Configuração e execução local com MySQL
 
