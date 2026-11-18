@@ -1,0 +1,26 @@
+{
+  "formatVersion": 1,
+  "application": "Postman Desktop 12.37.2",
+  "mode": "local",
+  "action": "Save Response",
+  "sourceFile": "Listar-servicos.example.yaml",
+  "sourceSha256": "3f6cb356e09174d7f1860538ee1e4f14e8104946b495b98c8ae8d43bea3e22f8",
+  "sourceFileModifiedAt": "2026-11-18T18:58:08.811Z",
+  "requestName": "Listar serviços",
+  "exampleName": "Listar serviços",
+  "request": {
+    "method": "GET",
+    "url": "{{baseUrl}}/services"
+  },
+  "response": {
+    "code": 200,
+    "status": "OK",
+    "headerCount": 10,
+    "bodySha256": "3d609518202a4b6e736c945126b63f66356380cca3027ebaac2e1811b600cc4e",
+    "records": 6
+  },
+  "responseFile": "Listar-servicos.response.json",
+  "collectionFile": "../projeto-integrador.postman_collection.json",
+  "existingExamplesPreserved": 87,
+  "manualExamplesAdded": 1
+}

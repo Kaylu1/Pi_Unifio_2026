@@ -1,0 +1,2 @@
+# Preserve the exact bytes saved by Postman for the recorded SHA-256 evidence.
+postman/evidencias-manuais/*.example.yaml -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

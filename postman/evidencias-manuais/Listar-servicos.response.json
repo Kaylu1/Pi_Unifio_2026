@@ -1,0 +1,60 @@
+{
+  "name": "Listar serviços",
+  "originalRequest": {
+    "method": "GET",
+    "header": [
+      {
+        "key": "Accept",
+        "value": "application/json"
+      }
+    ],
+    "url": "{{baseUrl}}/services"
+  },
+  "status": "OK",
+  "code": 200,
+  "_postman_previewlanguage": "json",
+  "header": [
+    {
+      "key": "Content-Type",
+      "value": "application/json; charset=utf-8"
+    },
+    {
+      "key": "Cache-Control",
+      "value": "no-store"
+    },
+    {
+      "key": "X-Content-Type-Options",
+      "value": "nosniff"
+    },
+    {
+      "key": "Referrer-Policy",
+      "value": "no-referrer"
+    },
+    {
+      "key": "X-Frame-Options",
+      "value": "DENY"
+    },
+    {
+      "key": "Content-Security-Policy",
+      "value": "default-src 'none'; frame-ancestors 'none'"
+    },
+    {
+      "key": "Date",
+      "value": "Wed, 18 Nov 2026 18:56:57 GMT"
+    },
+    {
+      "key": "Connection",
+      "value": "keep-alive"
+    },
+    {
+      "key": "Keep-Alive",
+      "value": "timeout=5"
+    },
+    {
+      "key": "Transfer-Encoding",
+      "value": "chunked"
+    }
+  ],
+  "cookie": [],
+  "body": "{\n  \"items\": [\n    {\n      \"id\": 6,\n      \"name\": \"Troca de correia\",\n      \"price\": 350,\n      \"active\": true,\n      \"purpose\": \"execucao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Substituição da correia de distribuição.\",\n      \"durationMinutes\": 180,\n      \"inspectionItems\": [\n        \"Estado da correia\",\n        \"Tensionadores\",\n        \"Sincronismo\"\n      ]\n    },\n    {\n      \"id\": 5,\n      \"name\": \"Diagnóstico eletrônico\",\n      \"price\": 150,\n      \"active\": true,\n      \"purpose\": \"avaliacao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Leitura de falhas e diagnóstico com scanner.\",\n      \"durationMinutes\": 60,\n      \"inspectionItems\": [\n        \"Códigos de falha\",\n        \"Sensores\",\n        \"Teste de funcionamento\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Sistema de freios\",\n      \"price\": 180,\n      \"active\": true,\n      \"purpose\": \"execucao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Inspeção e manutenção do sistema de freios.\",\n      \"durationMinutes\": 90,\n      \"inspectionItems\": [\n        \"Pastilhas\",\n        \"Discos\",\n        \"Fluido de freio\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Alinhamento\",\n      \"price\": 95,\n      \"active\": true,\n      \"purpose\": \"execucao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Alinhamento da direção e geometria.\",\n      \"durationMinutes\": 45,\n      \"inspectionItems\": [\n        \"Desgaste dos pneus\",\n        \"Folgas na direção\",\n        \"Geometria\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Revisão preventiva\",\n      \"price\": 280,\n      \"active\": true,\n      \"purpose\": \"execucao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Inspeção geral dos principais sistemas.\",\n      \"durationMinutes\": 120,\n      \"inspectionItems\": [\n        \"Fluidos e filtros\",\n        \"Freios e suspensão\",\n        \"Iluminação\",\n        \"Correias\"\n      ]\n    },\n    {\n      \"id\": 1,\n      \"name\": \"Troca de óleo\",\n      \"price\": 120,\n      \"active\": true,\n      \"purpose\": \"execucao\",\n      \"createdAt\": \"2026-11-18T18:55:53.799Z\",\n      \"updatedAt\": \"2026-11-18T18:55:53.799Z\",\n      \"description\": \"Substituição de óleo e filtro do motor.\",\n      \"durationMinutes\": 45,\n      \"inspectionItems\": [\n        \"Nível e estado do óleo\",\n        \"Filtro de óleo\",\n        \"Vazamentos\"\n      ]\n    }\n  ],\n  \"total\": 6,\n  \"page\": 1,\n  \"pageSize\": 20\n}"
+}

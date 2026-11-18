@@ -1,12 +1,14 @@
 {
-  "executedAt": "2026-11-18T13:31:22.668Z",
-  "runtime": "Newman CLI (Postman Collection Runtime)",
+  "executedAt": "2026-11-18T19:03:47.392Z",
+  "runtime": "Newman (Node.js API / Postman Collection Runtime)",
   "fixtureName": "postgres_test",
   "database": "postgres",
   "databaseRuntime": "pglite",
   "executionScope": "local",
   "remoteDeploymentTested": false,
-  "collectionSha256": "7d5c4c2fa3e733ad58a378058630a422b10f4714783e9697f34acb6ea78ad71c",
+  "collectionSha256": "9413208d4621b4e0207840b3b235555d0170a2e3ded5e999484ba3af2bb36c24",
+  "savedExamples": 88,
+  "manualExamples": 1,
   "passed": true,
   "stats": {
     "iterations": {

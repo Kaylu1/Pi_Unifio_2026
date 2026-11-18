@@ -120,4 +120,12 @@ O teste adicional `tests/vercel-compiled.test.mjs` compila a função e o servid
 
 As verificações de nuvem foram feitas em `https://pi-unifio-2026.vercel.app`. O login de conferência gerou apenas os registros normais de segurança da autenticação; a sessão foi encerrada. Não foram aplicadas migrações nem alterados cadastros de clientes, serviços, agendamentos ou estoque nessa conferência.
 
-A revisão final do enunciado confirmou os arquivos e os recursos técnicos. O grupo ainda não confirmou a dispensa do uso do projeto-base do professor. Essa questão de origem, o uso manual de Save Response e a entrega/apresentação continuam discriminados na [matriz de requisitos](ACADEMICO-REQUISITOS.md).
+A revisão final do enunciado confirmou os arquivos e os recursos técnicos. O grupo ainda não confirmou a dispensa do uso do projeto-base do professor. Essa questão de origem e a entrega/apresentação continuam discriminadas na [matriz de requisitos](ACADEMICO-REQUISITOS.md). A demonstração manual do Postman foi realizada posteriormente, conforme o registro abaixo.
+
+## Exemplo salvo manualmente no Postman — 18/11/2026
+
+O grupo abriu a coleção no modo local do Postman 12.37.2, enviou `GET /services` e recebeu **200 OK**, com a verificação da requisição aprovada. Em seguida, utilizou **Save Response**. A interface passou a mostrar o exemplo **Listar serviços**, além do exemplo HTTP 200 já existente. O novo arquivo local foi gravado em 18/11, às 15h58 no horário de São Paulo.
+
+A [cópia do arquivo salvo pelo aplicativo](../postman/evidencias-manuais/Listar-servicos.example.yaml) foi preservada e sua resposta incorporada à coleção JSON v2.1 exigida para a entrega. O conjunto passa a conter **87 requisições, 88 exemplos e 28 variáveis**: 87 exemplos da captura inicial e um exemplo manual. O registro não afirma que todas as respostas foram salvas manualmente.
+
+A captura inicial e sua execução Newman descritas nas seções anteriores permanecem como evidência histórica. Após a inclusão do exemplo manual, a coleção foi novamente reproduzida na fixture PostgreSQL local pelo Newman: **87 requisições, 87 verificações aprovadas e nenhuma falha**. O [relatório atual](../postman/newman-result.json) identifica 88 exemplos salvos e o hash da coleção executada, `9413208d4621b4e0207840b3b235555d0170a2e3ded5e999484ba3af2bb36c24`.

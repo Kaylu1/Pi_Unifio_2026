@@ -617,5 +617,18 @@
       "expected": 200,
       "actual": 200
     }
+  ],
+  "savedExamples": 88,
+  "manualExamples": [
+    {
+      "request": "Listar serviços",
+      "method": "GET",
+      "url": "{{baseUrl}}/services",
+      "responseCode": 200,
+      "source": "evidencias-manuais/Listar-servicos.example.yaml",
+      "provenance": "evidencias-manuais/Listar-servicos.provenance.json",
+      "sourceFileModifiedAt": "2026-11-18T18:58:08.811Z",
+      "sourceSha256": "3f6cb356e09174d7f1860538ee1e4f14e8104946b495b98c8ae8d43bea3e22f8"
+    }
   ]
 }

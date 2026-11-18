@@ -1,0 +1,128 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/services"
+  method: GET
+  headers:
+    Accept: application/json
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+    Cache-Control: no-store
+    X-Content-Type-Options: nosniff
+    Referrer-Policy: no-referrer
+    X-Frame-Options: DENY
+    Content-Security-Policy: default-src 'none'; frame-ancestors 'none'
+    Date: Wed, 18 Nov 2026 18:56:57 GMT
+    Connection: keep-alive
+    Keep-Alive: timeout=5
+    Transfer-Encoding: chunked
+  body:
+    type: json
+    content: |-
+      {
+        "items": [
+          {
+            "id": 6,
+            "name": "Troca de correia",
+            "price": 350,
+            "active": true,
+            "purpose": "execucao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Substituição da correia de distribuição.",
+            "durationMinutes": 180,
+            "inspectionItems": [
+              "Estado da correia",
+              "Tensionadores",
+              "Sincronismo"
+            ]
+          },
+          {
+            "id": 5,
+            "name": "Diagnóstico eletrônico",
+            "price": 150,
+            "active": true,
+            "purpose": "avaliacao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Leitura de falhas e diagnóstico com scanner.",
+            "durationMinutes": 60,
+            "inspectionItems": [
+              "Códigos de falha",
+              "Sensores",
+              "Teste de funcionamento"
+            ]
+          },
+          {
+            "id": 4,
+            "name": "Sistema de freios",
+            "price": 180,
+            "active": true,
+            "purpose": "execucao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Inspeção e manutenção do sistema de freios.",
+            "durationMinutes": 90,
+            "inspectionItems": [
+              "Pastilhas",
+              "Discos",
+              "Fluido de freio"
+            ]
+          },
+          {
+            "id": 3,
+            "name": "Alinhamento",
+            "price": 95,
+            "active": true,
+            "purpose": "execucao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Alinhamento da direção e geometria.",
+            "durationMinutes": 45,
+            "inspectionItems": [
+              "Desgaste dos pneus",
+              "Folgas na direção",
+              "Geometria"
+            ]
+          },
+          {
+            "id": 2,
+            "name": "Revisão preventiva",
+            "price": 280,
+            "active": true,
+            "purpose": "execucao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Inspeção geral dos principais sistemas.",
+            "durationMinutes": 120,
+            "inspectionItems": [
+              "Fluidos e filtros",
+              "Freios e suspensão",
+              "Iluminação",
+              "Correias"
+            ]
+          },
+          {
+            "id": 1,
+            "name": "Troca de óleo",
+            "price": 120,
+            "active": true,
+            "purpose": "execucao",
+            "createdAt": "2026-11-18T18:55:53.799Z",
+            "updatedAt": "2026-11-18T18:55:53.799Z",
+            "description": "Substituição de óleo e filtro do motor.",
+            "durationMinutes": 45,
+            "inspectionItems": [
+              "Nível e estado do óleo",
+              "Filtro de óleo",
+              "Vazamentos"
+            ]
+          }
+        ],
+        "total": 6,
+        "page": 1,
+        "pageSize": 20
+      }
+order: 2000

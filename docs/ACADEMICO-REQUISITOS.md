@@ -50,7 +50,8 @@ Os resultados descrevem os cenários executados localmente. A aprovação da ava
 | Suíte geral de testes após correção do adaptador PostgreSQL | 158 aprovados, nenhuma falha |
 | Integração com MySQL Community 8.4.13 | 10 aprovados, nenhuma falha |
 | Build do Angular e verificação de CSP | Aprovados; permanece o aviso de tamanho do pacote inicial |
-| Coleção Postman PostgreSQL e reprodução Newman | 87 requisições, 87 exemplos, 28 variáveis preenchidas e 87 verificações aprovadas |
+| Coleção Postman PostgreSQL e reprodução Newman, após inclusão do exemplo manual | 87 requisições, 88 exemplos, 28 variáveis preenchidas e 87 verificações aprovadas |
+| Save Response no aplicativo Postman | GET de serviços retornou 200; um exemplo manual foi salvo e incorporado ao JSON, totalizando 88 respostas |
 | Navegador com PostgreSQL local | Cinco suítes aprovadas |
 | Função JavaScript compilada e testes de entrada da Vercel | Nove testes aprovados, incluindo o novo teste que bloqueia dependência dos fontes originais |
 | API publicada após a correção do pacote | Health, login do gerente, sessão e logout responderam 200 |
@@ -58,10 +59,10 @@ Os resultados descrevem os cenários executados localmente. A aprovação da ava
 
 A tabela apresenta as verificações de 18/11. O [relatório de validação](ACADEMICO-VALIDACAO.md) identifica o ambiente e a data de cada prova e distingue as fixtures locais da observação da API publicada.
 
-## Pontos formais que dependem do grupo
+## Situação formal da entrega
 
 - **Projeto-base do professor — confirmação pendente:** o enunciado exige utilizar o e-commerce disponibilizado em aula como ponto de partida. Em 18/11, o grupo informou que ainda não confirmou a dispensa desse requisito. A autorização para trocar as tecnologias não comprova, por si, autorização para utilizar uma implementação própria. O código e o histórico examinados não comprovam derivação direta do repositório Java; esse ponto precisa ser esclarecido com o professor antes de declarar atendimento integral ao enunciado.
-- **Uso do aplicativo Postman:** a coleção contém respostas reais exportadas como exemplos, e sua reprodução pelo Newman está registrada. Não foi registrada uma demonstração manual do recurso **Save Response** no aplicativo. Para seguir literalmente essa orientação, o grupo deve importar a coleção, executar as requisições e salvar os exemplos pelo Postman.
+- **Uso do aplicativo Postman — demonstrado:** em 18/11, o grupo executou a consulta de serviços no Postman 12.37.2, recebeu 200 e utilizou **Save Response**. O novo exemplo apareceu na interface e foi gravado em arquivo. A [evidência manual](../postman/evidencias-manuais/Listar-servicos.example.yaml) foi incorporada à coleção JSON v2.1. Essa observação comprova uma operação manual; as demais 87 respostas permanecem identificadas como captura automatizada.
 - **Entrega e apresentação:** a submissão do link no Ambiente Conhecer e a compreensão individual do código não podem ser comprovadas por testes automatizados. Essas etapas devem ser realizadas pelo grupo.
 
 Esses pontos são distintos da presença das funcionalidades e dos arquivos exigidos. A matriz não afirma procedência do código ou ações manuais que não foram verificadas.
@@ -74,6 +75,6 @@ Em 18/11, o erro inicial 503 foi reproduzido no pacote da Vercel: os arquivos Ja
 
 ## Parecer da revisão do enunciado
 
-A revisão do código, da modelagem, da coleção e das evidências não identificou lacuna técnica comprovada nos dez critérios de pontuação, considerando as substituições tecnológicas autorizadas. A coleção possui 87 requisições, 87 respostas salvas e 28 variáveis preenchidas; seu hash corresponde ao relatório Newman de 87 verificações aprovadas.
+A revisão do código, da modelagem, da coleção e das evidências não identificou lacuna técnica comprovada nos dez critérios de pontuação, considerando as substituições tecnológicas autorizadas. A coleção possui 87 requisições, 88 respostas salvas e 28 variáveis preenchidas, incluindo um exemplo manual do aplicativo. A versão atual foi novamente reproduzida pelo Newman com 87 verificações aprovadas; o hash da coleção corresponde ao relatório atual.
 
 O atendimento integral ainda depende do esclarecimento sobre o projeto-base e das etapas de demonstração e entrega descritas acima. Este parecer não atribui nota nem substitui a avaliação do professor.

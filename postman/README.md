@@ -1,6 +1,6 @@
 # Testes da API PostgreSQL no Postman
 
-A coleção principal **projeto-integrador.postman_collection.json** contém exemplos de respostas reais da API TypeScript utilizando o adaptador PostgreSQL. A captura de **18/11/2026** foi realizada em **PGlite local**, com as migrações PostgreSQL do projeto e dados fictícios.
+A coleção principal **projeto-integrador.postman_collection.json** contém **87 requisições, 88 respostas salvas e 28 variáveis**, utilizando o adaptador PostgreSQL. A captura inicial de **18/11/2026** foi realizada em **PGlite local**, com as migrações PostgreSQL do projeto e dados fictícios; posteriormente, um exemplo salvo manualmente no Postman foi acrescentado às 87 respostas capturadas.
 
 `postgres_test` é o nome lógico dessa fixture efêmera. Ela é criada na memória do processo e utiliza o esquema `oscar_private`; não acessa o banco Supabase remoto. Essas evidências verificam o adaptador PostgreSQL e os casos de uso da API. Uma execução local não comprova a configuração ou o funcionamento do deploy na Vercel.
 
@@ -47,9 +47,11 @@ Referências oficiais: [migração de coleções](https://learning.postman.com/d
 - **`projeto-integrador.postman_collection.json`** inclui as requisições, variáveis, verificações e os exemplos capturados.
 - **`newman-result.json`** registra a reprodução da coleção pelo runtime Postman/Newman em PostgreSQL local.
 
-Em **18/11/2026**, foram capturadas **87 respostas** e a reprodução pelo Newman aprovou **87 requisições e 87 verificações**, sem falhas. O resumo também registra o hash SHA-256 da coleção verificada.
+Em **18/11/2026**, foram capturadas **87 respostas** e a reprodução pelo Newman aprovou **87 requisições e 87 verificações**, sem falhas. Após acrescentar o exemplo manual, a versão com **88 respostas salvas** foi novamente reproduzida: **87 requisições e 87 verificações aprovadas**, sem falhas. O resumo registra o hash SHA-256 da coleção atual.
 
-A captura interrompe em qualquer falha e só grava a coleção completa depois que todas as requisições passam. O uso manual de Save Response no aplicativo deve ser demonstrado pelo grupo; a captura automática e a execução pelo Newman não representam cliques manuais no Postman.
+A captura interrompe em qualquer falha e só grava a coleção completa depois que todas as requisições passam. Esse comando substitui a coleção gerada; preserve os exemplos manuais antes de executá-lo novamente.
+
+Em **18/11/2026**, o grupo enviou `GET /services` no Postman 12.37.2, recebeu **200 OK** e utilizou **Save Response**. O novo exemplo **Listar serviços** apareceu abaixo da requisição na interface e foi gravado em um arquivo local. A [cópia desse arquivo](evidencias-manuais/Listar-servicos.example.yaml) preserva a evidência manual, também incorporada à coleção JSON v2.1. Foi observada essa operação manual; as outras 87 respostas continuam identificadas como captura automatizada, sem atribuir cliques manuais a elas.
 
 Com a fixture PostgreSQL aberta, a coleção pode ser reproduzida pelo Newman sem adicioná-lo às dependências do aplicativo:
 
