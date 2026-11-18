@@ -2,6 +2,8 @@
 
 Antes de começar, importe no Postman a coleção da pasta postman. Para ensaiar a API, inicie `node scripts/academic-postgres-fixture.mjs`: ela usa PostgreSQL local/PGlite e apenas dados fictícios. A interface e o Postman devem apontar para o mesmo ambiente caso a demonstração acompanhe os mesmos registros; a fixture de testes não sincroniza dados com o Supabase ou com o MySQL do Angular padrão.
 
+Se a importação no Postman 12 falhar, use a alternativa local documentada em [postman/README.md](../postman/README.md): a coleção convertida fica em `data/postman-local` e é aberta por **Local Files → Open Folder**. A conversão foi reproduzida com 87 requisições e 87 verificações aprovadas na API local. A coleção JSON original continua sendo o arquivo de entrega.
+
 1. **Problema e modelo.** “O OScar acompanha o atendimento de uma oficina, da reserva até a entrega.” Mostre o [diagrama](modelo-dados.svg): cliente tem veículos; agendamento liga cliente, veículo e mecânico; a O.S. recebe serviços/peças, orçamento e movimentos.
 2. **Camadas.** Abra o controller, um serviço e o repositório. Explique: “O controller entende HTTP; o serviço aplica as regras; o repositório executa o SQL no PostgreSQL do Supabase. A Vercel recebe a requisição e injeta esse repositório.” Mostre uma regra da agenda ou do estoque.
 3. **Segurança.** No Postman, execute os exemplos 401 sem credenciais, 401 com senha errada e 403 com o mecânico tentando cadastrar serviço. Depois execute a consulta autenticada como gerente.
