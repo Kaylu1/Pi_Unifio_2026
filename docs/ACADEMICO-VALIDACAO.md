@@ -90,10 +90,34 @@ npm.cmd run test:browser:postgres -- flow request access features model
 
 A captura foi realizada com `scripts/academic-postgres-fixture.mjs` e `scripts/postman-evidence.mjs`. O Newman foi executado pelo cache temporário do npm, sem adicioná-lo às dependências do aplicativo. [Evidências da captura](../postman/evidencias.json) e [resumo Newman](../postman/newman-result.json) identificam PostgreSQL/PGlite local e o hash da coleção correspondente.
 
-### Limite da verificação da implantação
+### Observação da implantação antes da correção
 
 Na observação pública de 18/11, `https://pi-unifio-2026.vercel.app/entrar` respondeu **200**, e `/api/health` respondeu **503** com mensagem genérica de indisponibilidade da API. Os status públicos do GitHub indicavam que o deploy do commit `dc40340` havia concluído, o que comprova a publicação, mas não a saúde da conexão ao banco.
 
 A tentativa SQL direta ao projeto Supabase esperado, restrita a leitura, foi recusada com código `XX000`. O hostname público do projeto também não foi resolvido nessa rede. Esses sinais não comprovam uma causa única. A verificação do status do projeto no painel foi solicitada ao usuário.
 
-As correções e os testes desta etapa foram realizados localmente. Não houve aplicação de migração, alteração de variáveis, escrita no Supabase de produção ou novo deploy. O resultado PostgreSQL local não é apresentado como prova de recuperação da API publicada.
+As correções e os testes dessa etapa inicial foram realizados localmente. Naquele momento, não houve aplicação de migração, alteração de variáveis, escrita no Supabase de produção ou novo deploy. O resultado PostgreSQL local não foi apresentado como prova de recuperação da API publicada.
+
+## Recuperação e conferência final — 18/11/2026
+
+Após a reativação do Supabase, as conexões nas portas 5432 e 6543 funcionaram com verificação TLS. Consultas somente de leitura confirmaram as 21 tabelas do schema. O erro de inicialização foi reproduzido no pacote gerado por `@vercel/node` 13.0.2: arquivos `.js` ainda importavam fontes `.ts` ausentes.
+
+O commit `32e1e61` passou a usar `api/index.ts`, imports diretos dos módulos TypeScript e configurações de compilação em `api/` e `server/` com `rewriteRelativeImportExtensions`. O pacote do builder foi testado antes e depois: a mesma consulta de saúde passou de 503 para 200, e uma rota protegida continuou retornando 401 sem autenticação.
+
+| Verificação | Resultado |
+|---|---|
+| TypeScript estrito, incluindo a entrada da Vercel | Aprovado |
+| Suíte geral após a mudança da entrada | 158 testes aprovados, nenhuma falha |
+| Testes focados da Vercel, incluindo o teste adicional da função compilada | Nove aprovados, nenhuma falha |
+| Build Angular e CSP | Aprovados, mantendo apenas o aviso de tamanho já registrado |
+| Deploy do commit `32e1e61` | Concluído; status público do GitHub confirmou sucesso |
+| `GET /api/health` publicado | 200, `status: ok`, `mode: cloud`, `database: postgres` |
+| Login, consulta de sessão e logout do gerente | 200 nas três operações; sessão de teste encerrada |
+| `GET /api/users` com HTTP Basic do gerente | 200; 15 usuários ativos, com perfis gerente, mecânico e cliente |
+| Consultas publicadas de agenda por data e peças abaixo do mínimo | 200 nas duas operações |
+
+O teste adicional `tests/vercel-compiled.test.mjs` compila a função e o servidor para JavaScript, bloqueia o carregamento dos fontes originais e verifica saúde e proteção de rota com PostgreSQL local/PGlite. Os testes focados incluem oito testes de entrada já existentes e esse novo caso; a tabela não soma execuções repetidas como se fossem testes distintos.
+
+As verificações de nuvem foram feitas em `https://pi-unifio-2026.vercel.app`. O login de conferência gerou apenas os registros normais de segurança da autenticação; a sessão foi encerrada. Não foram aplicadas migrações nem alterados cadastros de clientes, serviços, agendamentos ou estoque nessa conferência.
+
+A revisão final do enunciado confirmou os arquivos e os recursos técnicos. O grupo ainda não confirmou a dispensa do uso do projeto-base do professor. Essa questão de origem, o uso manual de Save Response e a entrega/apresentação continuam discriminados na [matriz de requisitos](ACADEMICO-REQUISITOS.md).

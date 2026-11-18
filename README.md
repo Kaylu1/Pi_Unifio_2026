@@ -52,7 +52,7 @@ O processamento HTTP utiliza os recursos nativos do Node.js. A biblioteca **`pg`
 
 A configuração da implantação está documentada em [Vercel](docs/VERCEL.md) e [Supabase](docs/SUPABASE.md). Credenciais SQL e variáveis privadas pertencem ao servidor. Os bancos de desenvolvimento e teste não são sincronizados automaticamente com a base de nuvem.
 
-Na investigação de **18/11/2026**, as conexões ao Supabase nas portas `5432` e `6543` funcionaram com verificação TLS. A falha `503` foi reproduzida no pacote da Vercel: arquivos JavaScript ainda importavam fontes `.ts` ausentes. A entrada da função passou a usar TypeScript diretamente, com configurações próprias que reescrevem as extensões na compilação. O teste `tests/vercel-compiled.test.mjs` executa os arquivos JavaScript emitidos; a disponibilidade do endereço publicado deve ser conferida separadamente em `/api/health`.
+Na investigação de **18/11/2026**, as conexões ao Supabase nas portas `5432` e `6543` funcionaram com verificação TLS. A falha `503` foi reproduzida no pacote da Vercel: arquivos JavaScript ainda importavam fontes `.ts` ausentes. A entrada da função passou a usar TypeScript diretamente, com configurações próprias que reescrevem as extensões na compilação. Após a implantação do commit `32e1e61`, `/api/health`, login, consulta de sessão e logout responderam **200** no domínio publicado. O teste `tests/vercel-compiled.test.mjs` executa os arquivos JavaScript emitidos para verificar essa inicialização.
 
 ## Configuração e execução local com MySQL
 

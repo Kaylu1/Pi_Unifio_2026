@@ -52,12 +52,15 @@ Os resultados descrevem os cenários executados localmente. A aprovação da ava
 | Build do Angular e verificação de CSP | Aprovados; permanece o aviso de tamanho do pacote inicial |
 | Coleção Postman PostgreSQL e reprodução Newman | 87 requisições, 87 exemplos, 28 variáveis preenchidas e 87 verificações aprovadas |
 | Navegador com PostgreSQL local | Cinco suítes aprovadas |
+| Função JavaScript compilada e testes de entrada da Vercel | Nove testes aprovados, incluindo o novo teste que bloqueia dependência dos fontes originais |
+| API publicada após a correção do pacote | Health, login do gerente, sessão e logout responderam 200 |
+| HTTP Basic e consultas no ambiente publicado | Consulta de usuários e as duas consultas personalizadas responderam 200; 15 usuários ativos em três perfis |
 
 A tabela apresenta as verificações de 18/11. O [relatório de validação](ACADEMICO-VALIDACAO.md) identifica o ambiente e a data de cada prova e distingue as fixtures locais da observação da API publicada.
 
 ## Pontos formais que dependem do grupo
 
-- **Projeto-base do professor:** o enunciado exige utilizar o e-commerce disponibilizado em aula como ponto de partida. A autorização informada cobre a substituição tecnológica. O código e o histórico examinados não comprovam uma derivação direta do repositório Java; o aceite dessa implementação própria do OScar deve abranger também esse requisito de origem.
+- **Projeto-base do professor — confirmação pendente:** o enunciado exige utilizar o e-commerce disponibilizado em aula como ponto de partida. Em 18/11, o grupo informou que ainda não confirmou a dispensa desse requisito. A autorização para trocar as tecnologias não comprova, por si, autorização para utilizar uma implementação própria. O código e o histórico examinados não comprovam derivação direta do repositório Java; esse ponto precisa ser esclarecido com o professor antes de declarar atendimento integral ao enunciado.
 - **Uso do aplicativo Postman:** a coleção contém respostas reais exportadas como exemplos, e sua reprodução pelo Newman está registrada. Não foi registrada uma demonstração manual do recurso **Save Response** no aplicativo. Para seguir literalmente essa orientação, o grupo deve importar a coleção, executar as requisições e salvar os exemplos pelo Postman.
 - **Entrega e apresentação:** a submissão do link no Ambiente Conhecer e a compreensão individual do código não podem ser comprovadas por testes automatizados. Essas etapas devem ser realizadas pelo grupo.
 
@@ -67,4 +70,10 @@ Esses pontos são distintos da presença das funcionalidades e dos arquivos exig
 
 A estrutura sugerida é adaptável: `package.json`/`package-lock.json` correspondem ao manifesto do projeto Node; `server/` contém o back-end, `tests/` seus testes, `src/` o Angular e `api/index.ts` a entrada serverless. Os caminhos `docs/modelo-dados.png`, `docs/documentacao-api.md` e `postman/projeto-integrador.postman_collection.json` existem. O README apresenta a árvore e a correspondência completa.
 
-Em 18/11, a página de entrada publicada respondeu 200, mas `/api/health` respondeu 503. Os testes PostgreSQL isolados verificam o código corrigido; a API publicada ainda precisa ser validada após a recuperação do acesso ao projeto Supabase e a atualização autorizada do deploy.
+Em 18/11, o erro inicial 503 foi reproduzido no pacote da Vercel: os arquivos JavaScript mantinham referências a fontes TypeScript ausentes. O commit `32e1e61` corrigiu a entrada e a reescrita de extensões. Após a implantação, `/api/health` respondeu 200 com `mode: cloud` e `database: postgres`; login, consulta da sessão e logout do gerente também responderam 200. A consulta autenticada por HTTP Basic confirmou 15 usuários ativos e os perfis gerente, mecânico e cliente. As consultas personalizadas de agenda e reposição responderam 200.
+
+## Parecer da revisão do enunciado
+
+A revisão do código, da modelagem, da coleção e das evidências não identificou lacuna técnica comprovada nos dez critérios de pontuação, considerando as substituições tecnológicas autorizadas. A coleção possui 87 requisições, 87 respostas salvas e 28 variáveis preenchidas; seu hash corresponde ao relatório Newman de 87 verificações aprovadas.
+
+O atendimento integral ainda depende do esclarecimento sobre o projeto-base e das etapas de demonstração e entrega descritas acima. Este parecer não atribui nota nem substitui a avaliação do professor.
