@@ -4,9 +4,21 @@
 
 Sistema do Projeto Integrador de Engenharia de Software para acompanhar o atendimento de uma oficina: solicitação do cliente, agendamento, inspeção, orçamento, execução, estoque e pós-venda.
 
+> **Tecnologia do projeto:** o back-end foi desenvolvido em **Node.js com TypeScript**, em substituição ao **Spring Boot e Spring Data JPA** previstos no enunciado. A alteração tecnológica foi autorizada pelo professor.
+
 O back-end aplica as regras da oficina e mantém a integridade dos registros. A interface utiliza Angular; a API é implementada em Node.js e TypeScript. O ambiente publicado utiliza PostgreSQL no Supabase e hospedagem na Vercel.
 
 [Aplicação](https://pi-unifio-2026.vercel.app) · [Documentação](docs/README.md) · [API](docs/documentacao-api.md) · [Modelo de dados](docs/modelo-dados.png) · [Postman](postman/README.md)
+
+## Integrantes
+
+| Nome completo | RA |
+|---|---|
+| Caio Eduardo Sapata Bruno | 270667 |
+| Lucas Henrique Benitez de Moraes | 272807 |
+| Luis Felipi Ferreira | 273194 |
+| João Lucas Silva Terçariol | 270959 |
+| Gabriel Claudino Martins Silva | 272425 |
 
 ## Funcionalidades
 
@@ -160,15 +172,5 @@ Os testes de MySQL real e navegador possuem preparação própria. Consulte [tes
 | Conferência dos requisitos | [docs/ACADEMICO-REQUISITOS.md](docs/ACADEMICO-REQUISITOS.md) |
 | Roteiro de apresentação | [docs/ACADEMICO-APRESENTACAO.md](docs/ACADEMICO-APRESENTACAO.md) |
 | Evidências de funcionamento | [docs/ACADEMICO-VALIDACAO.md](docs/ACADEMICO-VALIDACAO.md) |
-
-## Integrantes
-
-| Nome completo | RA |
-|---|---|
-| Caio Eduardo Sapata Bruno | 270667 |
-| Gabriel Claudino Martins Silva | 272425 |
-| João Lucas Terçariol | 270959 |
-| Luis Felipi Ferreira | 273194 |
-| Lucas Henrique Benitez de Moraes | 272807 |
 
 Um integrante deve entregar o link de [Kaylu1/Pi_Unifio_2026](https://github.com/Kaylu1/Pi_Unifio_2026) na atividade **Projeto Integrador**, no Ambiente Conhecer. Todos devem estar preparados para explicar o modelo, as camadas, as regras e as requisições demonstradas.
