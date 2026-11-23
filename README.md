@@ -19,6 +19,8 @@ O back-end aplica as regras da oficina e mantém a integridade dos registros. A 
 | Luis Felipi Ferreira | 273194 |
 | João Lucas Silva Terçariol | 270959 |
 | Gabriel Claudino Martins Silva | 272425 |
+| Saymon Emanuel Lourenço Guilherme  | 273132 |
+
 
 ## Funcionalidades
 
